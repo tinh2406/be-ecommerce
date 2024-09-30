@@ -21,3 +21,12 @@ class RegisterSerializer(Serializer):
         if attrs['password'] != attrs['re_password']:
             raise ValidationError({"password": "Password does not match"}, 400)
         return attrs
+
+class LoginSerializer(Serializer):
+    email = EmailField()
+    password = CharField()
+
+    def create(self, validated_data):
+        email = validated_data.get('email')
+        password = validated_data.get('password')
+        return UserService.login(email, password)

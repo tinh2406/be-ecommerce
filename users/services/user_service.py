@@ -5,7 +5,7 @@ from rest_framework.exceptions import NotFound
 from users.document import UserDocument
 from users.models import User
 from users.services.profile_service import ProfileService
-
+from users.services.jwt_service import JWTService
 class UserService:
     @classmethod
     def create(cls, validated, **kwargs) -> User:
@@ -51,3 +51,17 @@ class UserService:
                 raise NotFound('User not found')
             return None
 
+    @classmethod
+    def login(cls, email, password, **kwargs) -> dict:
+        user = cls.get_by_email(email)
+        if not user.check_password(password):
+            raise NotFound('User not found')
+        return {
+            'user': {
+                'id': str(user.id),
+                'name': user.name,
+                'email': user.email,
+                'role': user.role,
+            },
+            'token': JWTService.encode(user)
+        }
