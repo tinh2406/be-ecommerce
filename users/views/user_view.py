@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from users.constants import Roles
-from users.serializers import UserSerializer, ChangeEmailSerializer
+from users.serializers import UserSerializer, ChangeEmailSerializer, UpdatePasswordSerializer
 from users.services import UserService
 
 
@@ -49,4 +49,20 @@ class UserViewSet(ModelViewSet):
             })
         return Response({
             'message': 'Change email failed'
+        }, status=400)
+
+    @action(methods=['POST'], detail=False)
+    def change_password(self, request):
+        user = request.user
+
+        serializer = UpdatePasswordSerializer(user, data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        if serializer.save():
+            return Response({
+                'message': 'Change password successfully'
+            })
+
+        return Response({
+            'message': 'Change password failed'
         }, status=400)
