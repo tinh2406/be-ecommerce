@@ -39,5 +39,5 @@ class AuthViewSet(ViewSet):
 
         UserService.request_token(email)
         return Response({
-            'message': 'Request reset password successfully'
+            'message': 'Request verify token successfully'
         })
