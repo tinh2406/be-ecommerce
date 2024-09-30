@@ -197,3 +197,27 @@ class UserService:
         cls.save_cache(instance, timeout=60)
         return True
 
+    @classmethod
+    def ban(cls, pk, **kwargs) -> bool:
+        instance = cls.get(pk)
+        instance.banned_at = timezone.now()
+        instance.save()
+        user_doc = UserDocument.get(id=str(instance.id))
+        user_doc.update(
+            banned_at=instance.banned_at
+        )
+        cache.delete(f'user_{str(pk)}')
+        cache.delete(f'user_{instance.email}')
+        return True
+
+    @classmethod
+    def unban(cls, pk, **kwargs) -> bool:
+        instance = cls.get(pk, allow_banned=True)
+        instance.banned_at = None
+        instance.save()
+        user_doc = UserDocument.get(id=str(instance.id))
+        user_doc.update(
+            banned_at=None
+        )
+        cls.save_cache(instance, timeout=60)
+        return True
