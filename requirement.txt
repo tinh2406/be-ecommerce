@@ -1,0 +1,13 @@
+django
+djangorestframework
+django-cors-headers
+django-crontab
+django-filter
+bandit
+django-nose
+django-environ
+celery
+redis
+elasticsearch
+django-elasticsearch-dsl
+mysqlclient

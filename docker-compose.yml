@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  db-my-sql:
+    image: mysql:8.0
+    ports:
+      - "${MYSQL_PORT}:3306"
+    expose:
+      - 3306
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+
+  elasticsearch:
+    container_name: e-es-container
+    image: docker.elastic.co/elasticsearch/elasticsearch:sha256-fbe8adcf94f9f57b8c75ae4a29018bd1f7e936e1e9870d4f50b1917e90735027
+    environment:
+      - xpack.security.enabled=false
+      - "discovery.type=single-node"
+    networks:
+      - es-net
+    ports:
+      - ${ELASTICSEARCH_PORT}:9200
+    volumes:
+      - ./data/elasticsearch:/usr/share/elasticsearch/data
+  redis:
+    image: redis:latest
+    container_name: e-redis-container
+    ports:
+      - ${REDIS_PORT}:6379
+    volumes:
+      - ./data/redis-data:/data
+    restart: unless-stopped
+
+  activemq:
+    image: rmohr/activemq:latest
+    container_name: e-activemq
+    ports:
+      - "${ACTIVEMQ_WEB_CONSOLE_PORT}:8161"  # Web console
+      - "${ACTIVEMQ_OPENWIRE_PORT}:61616"  # OpenWire (JMS) protocol
+      - "${ACTIVEMQ_STOMP_PORT}:61613"  # STOMP protocol
+      - "${ACTIVEMQ_MQTT_PORT}:1883"  # MQTT protocol
+      - "${ACTIVEMQ_AMQP_PORT}:5672"  # AMQP protocol
+    environment:
+      - ACTIVEMQ_ADMIN_LOGIN=${ACTIVEMQ_ADMIN_LOGIN}
+      - ACTIVEMQ_ADMIN_PASSWORD=${ACTIVEMQ_ADMIN_PASSWORD}
+    volumes:
+      - ./data/activemq_data:/var/activemq/data
+    restart: unless-stopped
+
+networks:
+  es-net:
+    driver: bridge
