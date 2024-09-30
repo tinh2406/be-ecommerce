@@ -34,6 +34,16 @@ class LoginSerializer(Serializer):
         password = validated_data.get('password')
         return UserService.login(email, password)
 
+class ChangeEmailSerializer(Serializer):
+    token = CharField()
+    email = EmailField()
+
+    def validate(self, attrs):
+        user = UserService.get_by_email(attrs['email'], raise_exception=False)
+        if user:
+            raise ValidationError({"email": "Email already exists"}, 400)
+        return attrs
+
 
 class UserSerializer(ModelSerializer):
     class Meta:

@@ -63,4 +63,4 @@ class JWTService:
                 "email": payload.get('email'),
             }
         except:
-            raise ValidationError('Invalid token')
+            raise ValidationError({'token': 'Invalid token'})

@@ -121,3 +121,20 @@ class UserService:
         })
         send_email_task.delay([email], 'Reset password', content)
         return token
+
+    @classmethod
+    def update_email(cls, validated_data, **kwargs) -> bool:
+        token = validated_data.get('token')
+        new_email = validated_data.get('email')
+
+        email = JWTService.confirm_verify_token(token).get('email')
+        instance = cls.get_by_email(email)
+        instance.email = new_email
+        instance.save()
+        user_doc = UserDocument.get(id=str(instance.id))
+        user_doc.update(
+            email=new_email
+        )
+        cls.save_cache(instance, timeout=60)
+        cache.delete(f'user_{email}')
+        return True
