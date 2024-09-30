@@ -4,6 +4,8 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
 from users.serializers import RegisterSerializer, LoginSerializer
+from users.services import UserService
+
 
 class AuthViewSet(ViewSet):
 
@@ -25,3 +27,17 @@ class AuthViewSet(ViewSet):
         serializer.is_valid(raise_exception=True)
         res = serializer.save()
         return Response(res)
+
+    @action(methods=['POST'], detail=False)
+    def request_token(self, request):
+        email = request.data.get('email')
+
+        if not email:
+            return Response({
+                'message': 'Email is required'
+            }, status=400)
+
+        UserService.request_token(email)
+        return Response({
+            'message': 'Request reset password successfully'
+        })

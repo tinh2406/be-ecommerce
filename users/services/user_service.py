@@ -1,11 +1,13 @@
 from django.core.cache import cache
 from django.db import transaction
+from django.template.loader import render_to_string
 from rest_framework.exceptions import NotFound
 
 from users.document import UserDocument
 from users.models import User
 from users.services.profile_service import ProfileService
 from users.services.jwt_service import JWTService
+from users.tasks import send_email_task
 class UserService:
     @classmethod
     def create(cls, validated, **kwargs) -> User:
@@ -109,3 +111,13 @@ class UserService:
         cache.set(cache_key, instance, timeout=timeout)
         cache_key = f'user_{instance.email}'
         cache.set(cache_key, instance, timeout=timeout)
+
+    @classmethod
+    def request_token(cls, email, **kwargs) -> str:
+        user = cls.get_by_email(email)
+        token = JWTService.create_verify_token(email)
+        content = render_to_string('../templates/reset_password.html', {
+            'token': token
+        })
+        send_email_task.delay([email], 'Reset password', content)
+        return token
