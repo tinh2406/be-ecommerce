@@ -5,6 +5,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from rest_framework.exceptions import NotFound
 
+from users.constants import Roles
 from users.document import UserDocument
 from users.models import User
 from users.services.profile_service import ProfileService
@@ -218,6 +219,27 @@ class UserService:
         user_doc = UserDocument.get(id=str(instance.id))
         user_doc.update(
             banned_at=None
+        )
+        cls.save_cache(instance, timeout=60)
+        return True
+
+    @classmethod
+    def update_role(cls, user: User, instance: User, role, **kwargs) -> bool:
+        if user.is_superuser:
+            instance.role = role
+
+        if user.role == Roles.ADMIN:
+            if instance.role == Roles.ADMIN:
+                raise PermissionDenied('You do not have permission to update role')
+            if role == Roles.ADMIN:
+                raise PermissionDenied('You cannot update to admin role')
+
+            instance.role = role
+
+        instance.save()
+        user_doc = UserDocument.get(id=str(instance.id))
+        user_doc.update(
+            role=instance.role
         )
         cls.save_cache(instance, timeout=60)
         return True

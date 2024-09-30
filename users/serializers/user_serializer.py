@@ -4,7 +4,8 @@ from django.core.validators import RegexValidator
 
 from users.models import User
 from users.services import UserService, ProfileService
-from users.constants import Genders
+from users.constants import Genders, Roles
+
 
 class RegisterSerializer(Serializer):
     email = EmailField()
@@ -72,6 +73,15 @@ class UpdatePasswordWithTokenSerializer(Serializer):
     def update(self, instance, validated_data):
         res = UserService.update_password_with_token(validated_data)
         return res
+
+class UpdateRoleSerializer(Serializer):
+    role = ChoiceField(choices=Roles.CHOICES)
+
+    def validate(self, attrs):
+        if attrs['role'] == Roles.ADMIN:
+            raise ValidationError('You cannot update to admin role')
+
+        return attrs
 
 class UserSerializer(ModelSerializer):
     class Meta:
