@@ -44,6 +44,34 @@ class ChangeEmailSerializer(Serializer):
             raise ValidationError({"email": "Email already exists"}, 400)
         return attrs
 
+class UpdatePasswordSerializer(Serializer):
+    old_password = CharField()
+    new_password = CharField()
+    re_new_password = CharField()
+
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['re_new_password']:
+            raise ValidationError({"new_password": "New password does not match"}, 400)
+        return attrs
+
+    def update(self, instance, validated_data):
+        res = UserService.update_password(instance, validated_data)
+        return res
+
+class UpdatePasswordWithTokenSerializer(Serializer):
+    token = CharField()
+    new_password = CharField()
+    re_new_password = CharField()
+
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['re_new_password']:
+            raise ValidationError({"new_password": "New password does not match"}, 400)
+
+        return attrs
+
+    def update(self, instance, validated_data):
+        res = UserService.update_password_with_token(validated_data)
+        return res
 
 class UserSerializer(ModelSerializer):
     class Meta:

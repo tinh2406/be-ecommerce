@@ -3,7 +3,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
-from users.serializers import RegisterSerializer, LoginSerializer
+from users.serializers import RegisterSerializer, LoginSerializer, UpdatePasswordWithTokenSerializer
 from users.services import UserService
 
 
@@ -41,3 +41,19 @@ class AuthViewSet(ViewSet):
         return Response({
             'message': 'Request verify token successfully'
         })
+
+    @action(methods=['POST'], detail=False)
+    def change_password(self, request):
+        user = request.user
+
+        serializer = UpdatePasswordWithTokenSerializer(user, data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        if serializer.save():
+            return Response({
+                'message': 'Change password successfully'
+            })
+
+        return Response({
+            'message': 'Change password failed'
+        }, status=400)

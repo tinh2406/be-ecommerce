@@ -1,4 +1,5 @@
 from django.core.cache import cache
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.template.loader import render_to_string
 from rest_framework.exceptions import NotFound
@@ -137,4 +138,29 @@ class UserService:
         )
         cls.save_cache(instance, timeout=60)
         cache.delete(f'user_{email}')
+        return True
+
+    @classmethod
+    def update_password(cls, instance: User, validated_data: dict, **kwargs) -> bool:
+        old_password = validated_data.get('old_password')
+        new_password = validated_data.get('new_password')
+
+        if not instance.check_password(old_password):
+            raise PermissionDenied('Old password is incorrect')
+
+        instance.set_password(new_password)
+        instance.save()
+        cls.save_cache(instance, timeout=60)
+        return True
+
+    @classmethod
+    def update_password_with_token(cls, validated_data: dict, **kwargs) -> bool:
+        token = validated_data.get('token')
+        new_password = validated_data.get('new_password')
+
+        email = JWTService.confirm_verify_token(token).get('email')
+        instance = cls.get_by_email(email)
+        instance.set_password(new_password)
+        instance.save()
+        cls.save_cache(instance, timeout=60)
         return True
