@@ -66,3 +66,36 @@ class UserViewSet(ModelViewSet):
         return Response({
             'message': 'Change password failed'
         }, status=400)
+
+    def destroy(self, request, *args, **kwargs):
+        user = request.user
+        pk = user.pk
+
+        if user.role in (Roles.ADMIN, Roles.STAFF):
+            pk = kwargs.get('pk')
+
+        if UserService.delete(pk):
+            return Response({
+                'message': 'Delete successfully'
+            })
+
+        return Response({
+            'message': 'Delete failed'
+        }, status=400)
+
+    @action(methods=['POST'], detail=True)
+    def restore(self, request, **kwargs):
+        user = request.user
+        if user.role not in (Roles.ADMIN, Roles.STAFF):
+            return Response({
+                'message': 'You do not have permission to restore user'
+            }, status=403)
+
+        pk = kwargs.get('pk')
+        if UserService.restore(pk):
+            return Response({
+                'message': 'Restore successfully'
+            })
+        return Response({
+            'message': 'Restore failed'
+        }, status=400)
