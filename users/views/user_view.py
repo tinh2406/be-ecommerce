@@ -99,3 +99,37 @@ class UserViewSet(ModelViewSet):
         return Response({
             'message': 'Restore failed'
         }, status=400)
+
+    @action(methods=['POST'], detail=True)
+    def ban(self, request, **kwargs):
+        user = request.user
+        if user.role not in (Roles.ADMIN, Roles.STAFF):
+            return Response({
+                'message': 'You do not have permission to ban user'
+            }, status=403)
+
+        pk = kwargs.get('pk')
+        if UserService.ban(pk):
+            return Response({
+                'message': 'Ban user successfully'
+            })
+        return Response({
+            'message': 'Ban failed'
+        }, status=400)
+
+    @action(methods=['POST'], detail=True)
+    def unban(self, request, **kwargs):
+        user = request.user
+        if user.role not in (Roles.ADMIN, Roles.STAFF):
+            return Response({
+                'message': 'You do not have permission to unban user'
+            }, status=403)
+
+        pk = kwargs.get('pk')
+        if UserService.unban(pk):
+            return Response({
+                'message': 'Unban user successfully'
+            })
+        return Response({
+            'message': 'Unban failed'
+        }, status=400)
