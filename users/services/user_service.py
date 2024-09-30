@@ -2,6 +2,7 @@ from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.template.loader import render_to_string
+from django.utils import timezone
 from rest_framework.exceptions import NotFound
 
 from users.document import UserDocument
@@ -164,3 +165,35 @@ class UserService:
         instance.save()
         cls.save_cache(instance, timeout=60)
         return True
+
+    @classmethod
+    def delete(cls, pk, **kwargs) -> bool:
+        instance = cls.get(pk, allow_banned=True)
+        user_doc = UserDocument.get(id=str(pk))
+
+        try:
+            instance.delete()
+            user_doc.delete()
+
+        except Exception as e:
+            instance.deleted_at = timezone.now()
+            instance.save()
+            user_doc.update(
+                deleted_at=instance.deleted_at
+            )
+        cache.delete(f'user_{str(pk)}')
+        cache.delete(f'user_{instance.email}')
+        return True
+
+    @classmethod
+    def restore(cls, pk, **kwargs) -> bool:
+        instance = cls.get(pk, allow_banned=True, allow_deleted=True)
+        instance.deleted_at = None
+        instance.save()
+        user_doc = UserDocument.get(id=str(instance.id))
+        user_doc.update(
+            deleted_at=None
+        )
+        cls.save_cache(instance, timeout=60)
+        return True
+
