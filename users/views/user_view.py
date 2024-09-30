@@ -1,10 +1,9 @@
 from rest_framework.decorators import action
-from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from users.constants import Roles
-from users.serializers import UserSerializer
+from users.serializers import UserSerializer, ChangeEmailSerializer
 from users.services import UserService
 
 
@@ -38,3 +37,16 @@ class UserViewSet(ModelViewSet):
         serializer.save(partial=partial)
 
         return Response(serializer.data)
+
+    @action(methods=['POST'], detail=False)
+    def change_email(self, request):
+
+        serializer = ChangeEmailSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        if UserService.update_email(serializer.data):
+            return Response({
+                'message': 'Change email successfully'
+            })
+        return Response({
+            'message': 'Change email failed'
+        }, status=400)
