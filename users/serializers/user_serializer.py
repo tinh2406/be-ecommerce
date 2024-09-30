@@ -1,5 +1,7 @@
-from rest_framework.serializers import Serializer, EmailField, CharField, ValidationError
+from rest_framework.serializers import Serializer, EmailField, CharField, \
+    ValidationError, ModelSerializer
 
+from users.models import User
 from users.services import UserService
 
 
@@ -30,3 +32,25 @@ class LoginSerializer(Serializer):
         email = validated_data.get('email')
         password = validated_data.get('password')
         return UserService.login(email, password)
+
+
+class UserSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = '__all__'
+        read_only_fields = ('id', 'created_at', 'deleted_at', 'banned_at')
+
+    def to_representation(self, instance):
+        return {
+            'id': instance.id,
+            'name': instance.name,
+            'email': instance.email,
+            'birthday': instance.profile.birthday,
+            'phone': instance.profile.phone,
+            'gender': instance.profile.get_gender,
+            'image': instance.profile.image,
+            'role': instance.get_role,
+            'created_at': instance.created_at,
+            'deleted_at': instance.deleted_at,
+            'banned_at': instance.banned_at
+        }

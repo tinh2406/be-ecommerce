@@ -52,6 +52,27 @@ class UserService:
             return None
 
     @classmethod
+    def get(cls, pk, raise_exception=True, allow_deleted=False, allow_banned=False, use_cache=True,
+            **kwargs) -> User | None:
+        try:
+            cache_key = f'user_{pk}'
+            if use_cache:
+                user_cache = cache.get(cache_key)
+                if user_cache:
+                    return user_cache
+            user = User.objects.get(pk=pk)
+            if not allow_deleted and user.deleted_at:
+                raise NotFound('User not found')
+            if not allow_banned and user.banned_at:
+                raise NotFound('User not found')
+            cache.set(cache_key, user, timeout=60)
+            return user
+        except Exception as e:
+            if raise_exception:
+                raise NotFound('User not found')
+            return None
+
+    @classmethod
     def login(cls, email, password, **kwargs) -> dict:
         user = cls.get_by_email(email)
         if not user.check_password(password):

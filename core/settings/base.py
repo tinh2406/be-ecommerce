@@ -123,7 +123,7 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        # 'core.authentications.APIAuthentication',
+        'users.services.authentication.JWTAuthentication',
     ],
     "DEFAULT_PAGINATION_CLASS": "core.common.BasePagination",
     "PAGE_SIZE": 12,
