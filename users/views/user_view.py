@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from users.constants import Roles
-from users.serializers import UserSerializer, ChangeEmailSerializer, UpdatePasswordSerializer
+from users.serializers import UserSerializer, ChangeEmailSerializer, UpdatePasswordSerializer, UpdateRoleSerializer
 from users.services import UserService
 
 
@@ -132,4 +132,22 @@ class UserViewSet(ModelViewSet):
             })
         return Response({
             'message': 'Unban failed'
+        }, status=400)
+
+    @action(methods=['POST'], detail=True)
+    def update_role(self, request, **kwargs):
+        pk = kwargs.get('pk')
+        instance = UserService.get(pk)
+
+        user = request.user
+
+        serializer = UpdateRoleSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        if UserService.update_role(user, instance, role=serializer.data.get('role')):
+            return Response({
+                'message': 'Update role successfully'
+            })
+
+        return Response({
+            'message': 'Update role failed'
         }, status=400)
