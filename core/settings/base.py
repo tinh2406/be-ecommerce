@@ -78,10 +78,12 @@ THIRD_PARTY_APPS = (
     "bandit",
     "django_nose",
 )
-LOCAL_APPS = ()
+LOCAL_APPS = (
+    "users",
+)
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
-# AUTH_USER_MODEL = "UserModel"
+AUTH_USER_MODEL = "users.User"
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
