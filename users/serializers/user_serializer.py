@@ -1,9 +1,10 @@
 from rest_framework.serializers import Serializer, EmailField, CharField, \
-    ValidationError, ModelSerializer
+    ValidationError, ModelSerializer, DateField, ChoiceField
+from django.core.validators import RegexValidator
 
 from users.models import User
-from users.services import UserService
-
+from users.services import UserService, ProfileService
+from users.constants import Genders
 
 class RegisterSerializer(Serializer):
     email = EmailField()
@@ -40,6 +41,14 @@ class UserSerializer(ModelSerializer):
         fields = '__all__'
         read_only_fields = ('id', 'created_at', 'deleted_at', 'banned_at')
 
+    name = CharField()
+    birthday = DateField(allow_null=True)
+    phone = CharField(max_length=11, allow_null=True, validators=[
+        RegexValidator(r'^\d{10}$', message='Phone number must be 11 digits')
+    ])
+    image = CharField(max_length=255, allow_null=True)
+    gender = ChoiceField(choices=Genders.CHOICES, allow_null=True)
+
     def to_representation(self, instance):
         return {
             'id': instance.id,
@@ -54,3 +63,9 @@ class UserSerializer(ModelSerializer):
             'deleted_at': instance.deleted_at,
             'banned_at': instance.banned_at
         }
+
+    def update(self, instance, validated_data):
+        partial = validated_data.pop('partial', False)
+        UserService.update(instance, validated_data, partial=partial)
+        ProfileService.update(instance.profile, validated_data, partial=partial)
+        return instance

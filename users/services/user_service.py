@@ -86,3 +86,26 @@ class UserService:
             },
             'token': JWTService.encode(user)
         }
+
+    @classmethod
+    def update(cls, instance: User, validated: dict, partial=False, **kwargs) -> User:
+        if partial:
+            instance.name = validated.get('name', instance.name)
+        else:
+            instance.name = validated.get('name')
+        instance.save()
+
+        user_doc = UserDocument.get(id=str(instance.id))
+        user_doc.update(
+            name=instance.name,
+        )
+
+        cls.save_cache(instance, timeout=60)
+        return instance
+
+    @classmethod
+    def save_cache(cls, instance, timeout=60, **kwargs):
+        cache_key = f'user_{instance.id}'
+        cache.set(cache_key, instance, timeout=timeout)
+        cache_key = f'user_{instance.email}'
+        cache.set(cache_key, instance, timeout=timeout)
