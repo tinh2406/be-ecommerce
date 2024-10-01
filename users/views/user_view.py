@@ -158,18 +158,9 @@ class UserViewSet(ModelViewSet):
         if request.user.role not in (Roles.ADMIN, Roles.STAFF):
             return self.me(request)
 
-        if request.data:
-            try:
-                res = UserService.raw_search(request.data)
-                return Response(res)
-            except Exception as e:
-                return Response({
-                    'message': str(e)
-                }, status=400)
-
         query = QueryUserSerializer(data=request.query_params)
         query.is_valid(raise_exception=True)
 
-        users = UserService.list(**query.data)
+        users = UserService.list(query.data)
 
         return Response(users)

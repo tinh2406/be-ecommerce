@@ -1,12 +1,12 @@
 from rest_framework.serializers import Serializer, EmailField, CharField, \
     ValidationError, ModelSerializer, DateField, ChoiceField, BooleanField, \
-    IntegerField, DateTimeField
+    DateTimeField
 from django.core.validators import RegexValidator
 
 from core.common import BaseQuerySerializer
 from users.models import User
 from users.services import UserService, ProfileService
-from users.constants import Genders, Roles
+from users.constants import Genders, Roles, UserOrderChoice
 
 
 class RegisterSerializer(Serializer):
@@ -28,6 +28,7 @@ class RegisterSerializer(Serializer):
             raise ValidationError({"password": "Password does not match"}, 400)
         return attrs
 
+
 class LoginSerializer(Serializer):
     email = EmailField()
     password = CharField()
@@ -36,6 +37,7 @@ class LoginSerializer(Serializer):
         email = validated_data.get('email')
         password = validated_data.get('password')
         return UserService.login(email, password)
+
 
 class ChangeEmailSerializer(Serializer):
     token = CharField()
@@ -46,6 +48,7 @@ class ChangeEmailSerializer(Serializer):
         if user:
             raise ValidationError({"email": "Email already exists"}, 400)
         return attrs
+
 
 class UpdatePasswordSerializer(Serializer):
     old_password = CharField()
@@ -60,6 +63,7 @@ class UpdatePasswordSerializer(Serializer):
     def update(self, instance, validated_data):
         res = UserService.update_password(instance, validated_data)
         return res
+
 
 class UpdatePasswordWithTokenSerializer(Serializer):
     token = CharField()
@@ -76,6 +80,7 @@ class UpdatePasswordWithTokenSerializer(Serializer):
         res = UserService.update_password_with_token(validated_data)
         return res
 
+
 class UpdateRoleSerializer(Serializer):
     role = ChoiceField(choices=Roles.CHOICES)
 
@@ -84,6 +89,7 @@ class UpdateRoleSerializer(Serializer):
             raise ValidationError('You cannot update to admin role')
 
         return attrs
+
 
 class QueryUserSerializer(BaseQuerySerializer):
     role = ChoiceField(choices=Roles.CHOICES, allow_null=True, required=False)
@@ -101,11 +107,10 @@ class QueryUserSerializer(BaseQuerySerializer):
     created_from = DateTimeField(allow_null=True, required=False)
     created_to = DateTimeField(allow_null=True, required=False)
 
-    order_by = ChoiceField(allow_null=True, required=False, choices=['created_at', 'deleted_at', 'banned_at', 'name', 'email', 'phone', 'gender'])
+    # override
+    order_by = ChoiceField(allow_null=True, required=False,
+                           choices=UserOrderChoice)
 
-    def validate(self, attrs):
-        super().validate(attrs)
-        return attrs
 
 class UserSerializer(ModelSerializer):
     class Meta:
