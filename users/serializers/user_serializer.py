@@ -138,7 +138,7 @@ class UserSerializer(ModelSerializer):
             'role': instance.get_role,
             'created_at': instance.created_at,
             'deleted_at': instance.deleted_at,
-            'banned_at': instance.banned_at
+            'banned_at': instance.banned_at,
         }
 
     def update(self, instance, validated_data):

@@ -1,3 +1,4 @@
+from django.core.exceptions import BadRequest
 from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -6,7 +7,7 @@ from rest_framework.viewsets import ModelViewSet
 from users.constants import Roles
 from users.serializers import UserSerializer, ChangeEmailSerializer, UpdatePasswordSerializer, UpdateRoleSerializer, \
     QueryUserSerializer
-from users.services import UserService
+from users.services import UserService, ESUserService
 
 
 class UserViewSet(ModelViewSet):
@@ -36,7 +37,12 @@ class UserViewSet(ModelViewSet):
         partial = kwargs.pop('partial', False)
         serializer = UserSerializer(user, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
-        serializer.save(partial=partial)
+        try:
+            serializer.save(partial=partial)
+        except Exception as e:
+            return Response({
+                "message": str(e)
+            },400)
 
         return Response(serializer.data)
 
@@ -161,6 +167,6 @@ class UserViewSet(ModelViewSet):
         query = QueryUserSerializer(data=request.query_params)
         query.is_valid(raise_exception=True)
 
-        users = UserService.list(query.data)
+        users = ESUserService.search(query.data)
 
         return Response(users)

@@ -4,11 +4,10 @@ from django.db import transaction
 from django.template.loader import render_to_string
 from django.utils import timezone
 from rest_framework.exceptions import NotFound
-from elasticsearch_dsl.query import Exists, Range, Term
 
 from users.constants import Roles
-from users.document import UserDocument
 from users.models import User
+from users.services.es_user_service import ESUserService
 from users.services.profile_service import ProfileService
 from users.services.jwt_service import JWTService
 from users.tasks import send_email_task
@@ -22,16 +21,8 @@ class UserService:
         name = validated.get('name')
         with transaction.atomic():
             user = User.objects.create_user(email=email, password=password, name=name)
-            profile = ProfileService.create(user)
-            user_doc = UserDocument(
-                meta={'id': str(user.id)},
-                name=user.name,
-                email=user.email,
-                role=user.role,
-                id=str(user.id),
-                created_at=user.created_at,
-            )
-            user_doc.save()
+            ProfileService.create(user)
+            ESUserService.index(user)
         key_cache = f'user_{user.email}'
         cache.set(key_cache, user, timeout=60)
         return user
@@ -103,11 +94,7 @@ class UserService:
         else:
             instance.name = validated.get('name')
         instance.save()
-
-        user_doc = UserDocument.get(id=str(instance.id))
-        user_doc.update(
-            name=instance.name,
-        )
+        ESUserService.update(instance, instance.profile)
 
         cls.save_cache(instance, timeout=60)
         return instance
@@ -138,10 +125,7 @@ class UserService:
         instance = cls.get_by_email(email)
         instance.email = new_email
         instance.save()
-        user_doc = UserDocument.get(id=str(instance.id))
-        user_doc.update(
-            email=new_email
-        )
+        ESUserService.update(instance, instance.profile)
         cls.save_cache(instance, timeout=60)
         cache.delete(f'user_{email}')
         return True
@@ -174,18 +158,15 @@ class UserService:
     @classmethod
     def delete(cls, pk, **kwargs) -> bool:
         instance = cls.get(pk, allow_banned=True)
-        user_doc = UserDocument.get(id=str(pk))
 
         try:
             instance.delete()
-            user_doc.delete()
+            ESUserService.delete(str(pk))
 
         except Exception as e:
             instance.deleted_at = timezone.now()
             instance.save()
-            user_doc.update(
-                deleted_at=instance.deleted_at
-            )
+            ESUserService.update(user=instance, profile=instance.profile)
         cache.delete(f'user_{str(pk)}')
         cache.delete(f'user_{instance.email}')
         return True
@@ -195,10 +176,7 @@ class UserService:
         instance = cls.get(pk, allow_banned=True, allow_deleted=True)
         instance.deleted_at = None
         instance.save()
-        user_doc = UserDocument.get(id=str(instance.id))
-        user_doc.update(
-            deleted_at=None
-        )
+        ESUserService.update(user=instance, profile=instance.profile)
         cls.save_cache(instance, timeout=60)
         return True
 
@@ -207,10 +185,7 @@ class UserService:
         instance = cls.get(pk)
         instance.banned_at = timezone.now()
         instance.save()
-        user_doc = UserDocument.get(id=str(instance.id))
-        user_doc.update(
-            banned_at=instance.banned_at
-        )
+        ESUserService.update(user=instance, profile=instance.profile)
         cache.delete(f'user_{str(pk)}')
         cache.delete(f'user_{instance.email}')
         return True
@@ -220,10 +195,7 @@ class UserService:
         instance = cls.get(pk, allow_banned=True)
         instance.banned_at = None
         instance.save()
-        user_doc = UserDocument.get(id=str(instance.id))
-        user_doc.update(
-            banned_at=None
-        )
+        ESUserService.update(user=instance, profile=instance.profile)
         cls.save_cache(instance, timeout=60)
         return True
 
@@ -241,108 +213,8 @@ class UserService:
             instance.role = role
 
         instance.save()
-        user_doc = UserDocument.get(id=str(instance.id))
-        user_doc.update(
-            role=instance.role
-        )
+        ESUserService.update(instance, instance.profile)
         cls.save_cache(instance, timeout=60)
         return True
 
-    @classmethod
-    def list(cls, query_params, paginate=True, **kwargs):
 
-        search = UserDocument.search()
-
-        # Lấy các tham số truy vấn
-        text = query_params.get('text')
-        role = query_params.get('role')
-        gender = query_params.get('gender')
-        birthday = query_params.get('birthday')
-        birthday_from = query_params.get('birthday_from')
-        birthday_to = query_params.get('birthday_to')
-        is_all = query_params.get('is_all')
-        is_deleted = query_params.get('is_deleted')
-        is_banned = query_params.get('is_banned')
-        created_from = query_params.get('created_from')
-        created_to = query_params.get('created_to')
-        delete_from = query_params.get('delete_from')
-        delete_to = query_params.get('delete_to')
-        banned_from = query_params.get('banned_from')
-        banned_to = query_params.get('banned_to')
-        order_by = query_params.get('order_by') if query_params.get('order_by') else 'created_at'
-        order_type = query_params.get('order_type') if query_params.get('order_type') else 'desc'
-        page_size = query_params.get('page_size', 10)
-        page = query_params.get('page', 1)
-        skip = query_params.get('skip')
-
-        if is_all:
-            if is_deleted is not None:
-                if is_deleted:
-                    query = Exists(field='deleted_at')
-                else:
-                    query = ~Exists(field='deleted_at')
-                search = search.query(query)
-            if is_banned is not None:
-                if is_banned:
-                    query = Exists(field='banned_at')
-                else:
-                    query = ~Exists(field='banned_at')
-                search = search.query(query)
-            if delete_from:
-                search = search.query(Range(deleted_at={'gte': delete_from}))
-            if delete_to:
-                search = search.query(Range(deleted_at={'lte': delete_to}))
-            if banned_from:
-                search = search.query(Range(banned_at={'gte': banned_from}))
-            if banned_to:
-                search = search.query(Range(banned_at={'lte': banned_to}))
-        else:
-            # Lọc những bản ghi không bị xóa hoặc banned
-            search = search.filter(
-                "bool",
-                must_not=[
-                    {"exists": {"field": "deleted_at"}},
-                    {"exists": {"field": "banned_at"}}
-                ]
-            )
-
-        # Lọc theo các thuộc tính khác
-        if text:
-            search = search.query("multi_match",
-                                  query=text,
-                                  fields=["name", "email", "phone"],
-                                  fuzziness="AUTO"
-                                  )
-        if role:
-            search = search.query(Term(role=role))
-        if birthday:
-            search = search.query(Term(birthday=birthday))
-        if birthday_from:
-            search = search.query(Range(birthday={'gte': birthday_from}))
-        if birthday_to:
-            search = search.query(Range(birthday={'lte': birthday_to}))
-        if gender:
-            search = search.query(Term(gender=gender))
-        if created_from:
-            search = search.query(Range(created_at={'gte': created_from}))
-        if created_to:
-            search = search.query(Range(created_at={'lte': created_to}))
-
-        if paginate:
-            search = search.sort({order_by: {"order": order_type}})
-            search = search[skip: skip + page_size]
-
-        response = search.execute()
-
-        users = [user for user in response.hits]
-
-        if paginate:
-            return {
-                'page_count': (response.hits.total.value - 1) // page_size + 1,
-                'item_count': response.hits.total.value,
-                'page_size': page_size,
-                'page': page,
-                'data': users
-            }
-
-        return users

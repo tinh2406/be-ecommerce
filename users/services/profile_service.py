@@ -20,7 +20,9 @@ class ProfileService:
             instance.birthday = data.get('birthday')
             instance.gender = data.get('gender')
             instance.image = data.get('image')
+        
         instance.save()
+
         user_doc = UserDocument.get(id=instance.user.id)
         user_doc.update(
             phone=instance.phone,
