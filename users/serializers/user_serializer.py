@@ -1,7 +1,9 @@
 from rest_framework.serializers import Serializer, EmailField, CharField, \
-    ValidationError, ModelSerializer, DateField, ChoiceField
+    ValidationError, ModelSerializer, DateField, ChoiceField, BooleanField, \
+    IntegerField, DateTimeField
 from django.core.validators import RegexValidator
 
+from core.common import BaseQuerySerializer
 from users.models import User
 from users.services import UserService, ProfileService
 from users.constants import Genders, Roles
@@ -81,6 +83,28 @@ class UpdateRoleSerializer(Serializer):
         if attrs['role'] == Roles.ADMIN:
             raise ValidationError('You cannot update to admin role')
 
+        return attrs
+
+class QueryUserSerializer(BaseQuerySerializer):
+    role = ChoiceField(choices=Roles.CHOICES, allow_null=True, required=False)
+    birthday = DateField(allow_null=True, required=False)
+    birthday_from = DateField(allow_null=True, required=False)
+    birthday_to = DateField(allow_null=True, required=False)
+    gender = ChoiceField(choices=Genders.CHOICES, allow_null=True, required=False)
+    is_deleted = BooleanField(allow_null=True, required=False)
+    is_banned = BooleanField(allow_null=True, required=False)
+    is_all = BooleanField(allow_null=True, required=False)
+    delete_from = DateTimeField(allow_null=True, required=False)
+    delete_to = DateTimeField(allow_null=True, required=False)
+    banned_from = DateTimeField(allow_null=True, required=False)
+    banned_to = DateTimeField(allow_null=True, required=False)
+    created_from = DateTimeField(allow_null=True, required=False)
+    created_to = DateTimeField(allow_null=True, required=False)
+
+    order_by = ChoiceField(allow_null=True, required=False, choices=['created_at', 'deleted_at', 'banned_at', 'name', 'email', 'phone', 'gender'])
+
+    def validate(self, attrs):
+        super().validate(attrs)
         return attrs
 
 class UserSerializer(ModelSerializer):

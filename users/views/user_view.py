@@ -1,9 +1,11 @@
 from rest_framework.decorators import action
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from users.constants import Roles
-from users.serializers import UserSerializer, ChangeEmailSerializer, UpdatePasswordSerializer, UpdateRoleSerializer
+from users.serializers import UserSerializer, ChangeEmailSerializer, UpdatePasswordSerializer, UpdateRoleSerializer, \
+    QueryUserSerializer
 from users.services import UserService
 
 
@@ -151,3 +153,23 @@ class UserViewSet(ModelViewSet):
         return Response({
             'message': 'Update role failed'
         }, status=400)
+
+    def list(self, request: Request, *args, **kwargs):
+        if request.user.role not in (Roles.ADMIN, Roles.STAFF):
+            return self.me(request)
+
+        if request.data:
+            try:
+                res = UserService.raw_search(request.data)
+                return Response(res)
+            except Exception as e:
+                return Response({
+                    'message': str(e)
+                }, status=400)
+
+        query = QueryUserSerializer(data=request.query_params)
+        query.is_valid(raise_exception=True)
+
+        users = UserService.list(**query.data)
+
+        return Response(users)
