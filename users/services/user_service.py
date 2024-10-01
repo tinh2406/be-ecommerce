@@ -4,6 +4,7 @@ from django.db import transaction
 from django.template.loader import render_to_string
 from django.utils import timezone
 from rest_framework.exceptions import NotFound
+from elasticsearch_dsl.query import Exists, Range, Term
 
 from users.constants import Roles
 from users.document import UserDocument
@@ -27,6 +28,7 @@ class UserService:
                 name=user.name,
                 email=user.email,
                 role=user.role,
+                id=str(user.id),
                 created_at=user.created_at,
             )
             user_doc.save()
@@ -247,30 +249,53 @@ class UserService:
         return True
 
     @classmethod
-    def list(cls, text=None, role=None, birthday=None, gender=None, is_deleted=None,
-             skip=None, is_banned=None, is_all=False, delete_from=None, delete_to=None, banned_from=None,
-             page_size=10, page=1, banned_to=None, created_from=None, created_to=None, order_by='_score',
-             order_type='desc', birthday_from=None, birthday_to=None, paginate=True, use_cache=True, **kwargs):
-        if order_by is None:
-            order_by = '_score'
-        if order_type is None:
-            order_type = 'desc'
+    def list(cls, query_params, paginate=True, **kwargs):
 
         search = UserDocument.search()
 
+        # Lấy các tham số truy vấn
+        text = query_params.get('text')
+        role = query_params.get('role')
+        gender = query_params.get('gender')
+        birthday = query_params.get('birthday')
+        birthday_from = query_params.get('birthday_from')
+        birthday_to = query_params.get('birthday_to')
+        is_all = query_params.get('is_all')
+        is_deleted = query_params.get('is_deleted')
+        is_banned = query_params.get('is_banned')
+        created_from = query_params.get('created_from')
+        created_to = query_params.get('created_to')
+        delete_from = query_params.get('delete_from')
+        delete_to = query_params.get('delete_to')
+        banned_from = query_params.get('banned_from')
+        banned_to = query_params.get('banned_to')
+        order_by = query_params.get('order_by') if query_params.get('order_by') else 'created_at'
+        order_type = query_params.get('order_type') if query_params.get('order_type') else 'desc'
+        page_size = query_params.get('page_size', 10)
+        page = query_params.get('page', 1)
+        skip = query_params.get('skip')
+
         if is_all:
             if is_deleted is not None:
-                search = cls.filter_true_false('deleted_at', is_deleted, search)
+                if is_deleted:
+                    query = Exists(field='deleted_at')
+                else:
+                    query = ~Exists(field='deleted_at')
+                search = search.query(query)
             if is_banned is not None:
-                search = cls.filter_true_false('banned_at', is_banned, search)
+                if is_banned:
+                    query = Exists(field='banned_at')
+                else:
+                    query = ~Exists(field='banned_at')
+                search = search.query(query)
             if delete_from:
-                search = search.filter('range', deleted_at={'gte': delete_from})
+                search = search.query(Range(deleted_at={'gte': delete_from}))
             if delete_to:
-                search = search.filter('range', deleted_at={'lte': delete_to})
+                search = search.query(Range(deleted_at={'lte': delete_to}))
             if banned_from:
-                search = search.filter('range', banned_at={'gte': banned_from})
+                search = search.query(Range(banned_at={'gte': banned_from}))
             if banned_to:
-                search = search.filter('range', banned_at={'lte': banned_to})
+                search = search.query(Range(banned_at={'lte': banned_to}))
         else:
             # Lọc những bản ghi không bị xóa hoặc banned
             search = search.filter(
@@ -283,27 +308,25 @@ class UserService:
 
         # Lọc theo các thuộc tính khác
         if text:
-            # search = search.query("query_string", query=f"*{text}*", fields=["name", "email", "phone"])
             search = search.query("multi_match",
                                   query=text,
                                   fields=["name", "email", "phone"],
                                   fuzziness="AUTO"
                                   )
         if role:
-            search = search.filter('term', role=role)
+            search = search.query(Term(role=role))
         if birthday:
-            search = search.filter('term', birthday=birthday)
+            search = search.query(Term(birthday=birthday))
         if birthday_from:
-            search = search.filter('range', birthday={'gte': birthday_from})
+            search = search.query(Range(birthday={'gte': birthday_from}))
         if birthday_to:
-            search = search.filter('range', birthday={'lte': birthday_to})
-
+            search = search.query(Range(birthday={'lte': birthday_to}))
         if gender:
-            search = search.filter('term', gender=gender)
+            search = search.query(Term(gender=gender))
         if created_from:
-            search = search.filter('range', created_at={'gte': created_from})
+            search = search.query(Range(created_at={'gte': created_from}))
         if created_to:
-            search = search.filter('range', created_at={'lte': created_to})
+            search = search.query(Range(created_at={'lte': created_to}))
 
         if paginate:
             search = search.sort({order_by: {"order": order_type}})
@@ -311,10 +334,7 @@ class UserService:
 
         response = search.execute()
 
-        users = []
-        for user in response.hits:
-            user.id = user.meta.id
-            users.append(user)
+        users = [user for user in response.hits]
 
         if paginate:
             return {
@@ -326,28 +346,3 @@ class UserService:
             }
 
         return users
-
-    @classmethod
-    def raw_search(cls, query, **kwargs):
-        search = UserDocument.search()
-        search = search
-        response = search.update_from_dict(query).execute()
-        users = []
-        for user in response.hits:
-            user.id = user.meta.id
-            users.append(user)
-        return users
-
-    @classmethod
-    def filter_true_false(cls, key, value, search, **kwargs):
-        """
-        Lọc theo trường `key` có giá trị `value`
-        """
-        if value:
-            search = search.filter("exists", field=key)
-        else:
-            search = search.filter(
-                "bool",
-                must_not=[{"exists": {"field": key}}]
-            )
-        return search

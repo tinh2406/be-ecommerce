@@ -10,14 +10,15 @@ class BaseQuerySerializer(Serializer):
     order_by = ChoiceField(allow_null=True, required=False, choices=['name', 'id'])
     order_type = ChoiceField(allow_null=True, required=False, choices=['asc', 'desc'])
 
-    def validate(self, attrs):
-        if attrs.get('text') == '':
-            attrs.pop('text')
+    def to_representation(self, instance):
+        if instance.get('text') == '':
+            instance.pop('text')
 
-        if attrs.get('page_size') is None or attrs.get('page_size') < 1 or attrs.get('page_size') > 100:
-            attrs['page_size'] = 10
-        if attrs.get('page') is None or attrs.get('page') < 1:
-            attrs['page'] = 1
-        attrs['skip'] = (attrs['page'] - 1) * attrs['page_size']
+        if instance.get('page_size') is None or instance.get('page_size') < 1 or instance.get('page_size') > 100:
+            instance['page_size'] = 10
+        if instance.get('page') is None or instance.get('page') < 1:
+            instance['page'] = 1
+        instance['skip'] = (instance['page'] - 1) * instance['page_size']
 
-        return attrs
+        return instance
+
