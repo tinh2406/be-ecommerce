@@ -14,7 +14,7 @@ class UserViewSet(ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         user = request.user
-        if user.get_id == kwargs.get('pk'):
+        if str(user.id) == kwargs.get('pk'):
             return self.me(request)
         if user.role not in (Roles.ADMIN, Roles.STAFF):
             return Response({
@@ -168,5 +168,6 @@ class UserViewSet(ModelViewSet):
         query.is_valid(raise_exception=True)
 
         users = ESUserService.search(query.data)
+        serializer = UserSerializer(users, many=True)
 
-        return Response(users)
+        return Response(serializer.data)
