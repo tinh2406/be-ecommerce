@@ -21,6 +21,6 @@ class Profile(Model):
         db_table = 'profiles'
 
     @property
-    def get_gender(self):
+    def gender_name(self):
         return Genders.DICT.get(self.gender)
 
