@@ -3,9 +3,8 @@ import sys
 
 
 def main():
-    if "tests" in sys.argv:
+    if "test" in sys.argv:
         os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings.test")
-        sys.argv.remove("tests")
     elif "development" in sys.argv:
         os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings.development")
         sys.argv.remove("development")
