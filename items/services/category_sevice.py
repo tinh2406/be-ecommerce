@@ -1,6 +1,7 @@
 from rest_framework.exceptions import NotFound
 from django.utils import timezone
 from items.models import Category
+from items.services import ESCategoryService
 
 
 class CategoryService:
@@ -11,6 +12,7 @@ class CategoryService:
         parent_id = validated.get('parent_id')
 
         category = Category.objects.create(name=name, parent_id=parent_id)
+        ESCategoryService.index(category)
         return category
 
     @classmethod
@@ -41,9 +43,9 @@ class CategoryService:
         else:
             instance.name = validated.get('name')
             parent_id = validated.get('parent_id')
-            instance.parent = cls.get(parent_id)
 
         instance.save()
+        ESCategoryService.update(instance)
         return instance
 
     @classmethod
@@ -51,16 +53,19 @@ class CategoryService:
         instance = cls.get(pk)
         try:
             instance.delete()
+            ESCategoryService.delete(pk)
         except Exception as e:
             instance.deleted_at = timezone.now()
             instance.save()
+            ESCategoryService.update(instance)
         return True
 
     @classmethod
     def restore(cls, pk):
         instance = cls.get(pk, allow_deleted=True)
-        instance.deleted_at=None
+        instance.deleted_at = None
         instance.save()
+        ESCategoryService.update(instance)
         return True
 
 
