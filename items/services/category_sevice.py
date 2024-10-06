@@ -32,16 +32,11 @@ class CategoryService:
         if partial:
 
             instance.name = validated.get("name", instance.name)
-
-            parent_id = validated.get('parent_id')
-            if parent_id:
-                parent = cls.get(parent_id)
-                instance.parent = parent
+            instance.parent_id = validated.get("parent_id", instance.parent_id)
 
         else:
             instance.name = validated.get('name')
-            parent_id = validated.get('parent_id')
-            instance.parent = cls.get(parent_id)
+            instance.parent_id = validated.get('parent_id')
 
         instance.save()
         return instance
