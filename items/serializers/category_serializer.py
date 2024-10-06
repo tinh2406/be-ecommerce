@@ -1,7 +1,7 @@
-from functools import partial
+from rest_framework.serializers import ModelSerializer, CharField, BooleanField, DateTimeField, ChoiceField
 
-from rest_framework.serializers import ModelSerializer, CharField
-
+from core.common import BaseQuerySerializer
+from items.constants import CategoryOrderChoice
 from items.models import Category
 from items.services import CategoryService
 
@@ -37,3 +37,21 @@ class CategorySerializer(ModelSerializer):
         partial = validated_data.pop('partial', False)
         instance = CategoryService.update(instance, validated_data, partial=partial)
         return instance
+
+class QueryCategorySerializer(BaseQuerySerializer):
+    parent_id = CharField(allow_blank=True, allow_null=True, required=False),
+
+    is_deleted = BooleanField(allow_null=True, required=False)
+    is_all = BooleanField(allow_null=True, required=False)
+    delete_from = DateTimeField(allow_null=True, required=False)
+    delete_to = DateTimeField(allow_null=True, required=False)
+    created_from = DateTimeField(allow_null=True, required=False)
+    created_to = DateTimeField(allow_null=True, required=False)
+
+    # override
+    order_by = ChoiceField(allow_null=True, required=False,
+                           choices=CategoryOrderChoice)
+
+
+
+
