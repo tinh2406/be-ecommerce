@@ -1,3 +1,4 @@
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from django.core.exceptions import PermissionDenied
@@ -8,10 +9,13 @@ from items.services import CategoryService
 
 class CategoryViewSet(ModelViewSet):
 
-    def create(self, request, *args, **kwargs):
+    def create_check_permission(self, request):
         user = request.user
         if not user or user.role != 1:
             raise PermissionDenied("You cannot do this action")
+
+    def create(self, request, *args, **kwargs):
+        self.create_check_permission(request)
 
         serializer = CategorySerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -25,9 +29,8 @@ class CategoryViewSet(ModelViewSet):
         return Response(category_serializer.data)
 
     def update(self, request, *args, **kwargs):
-        user = request.user
-        if not user or user.role != 1:
-            raise PermissionDenied("You cannot do this action")
+        self.create_check_permission(request)
+
         pk = kwargs.get('pk')
         partial = kwargs.get('partial', False)
         instance = CategoryService.get(pk)
@@ -36,3 +39,17 @@ class CategoryViewSet(ModelViewSet):
         serializer.save(partial=partial)
 
         return Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        self.create_check_permission(request)
+
+        pk = kwargs.get('pk')
+        CategoryService.delete(pk)
+        return Response(status=204)
+    
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        self.create_check_permission(request)
+
+        CategoryService.restore(pk)
+        return Response(status=204)
