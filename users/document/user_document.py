@@ -5,6 +5,7 @@ class UserDocument(Document):
     class Index:
         name = 'users'
 
+    id = Text()
     name = Text()
     email = Text()
     role = Integer()

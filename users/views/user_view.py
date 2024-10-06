@@ -168,6 +168,5 @@ class UserViewSet(ModelViewSet):
         query.is_valid(raise_exception=True)
 
         users = ESUserService.search(query.data)
-        serializer = UserSerializer(users, many=True)
 
-        return Response(serializer.data)
+        return Response(users)

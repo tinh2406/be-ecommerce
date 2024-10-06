@@ -6,3 +6,5 @@ from .cities import Cities
 
 UserOrderChoice = ['created_at', 'deleted_at', 'banned_at', 'name', 'email', 'phone', 'gender']
 
+UserOrderChoice = ['created_at', 'deleted_at', 'banned_at', 'name', 'email', 'phone', 'gender']
+

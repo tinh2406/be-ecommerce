@@ -10,6 +10,7 @@ class ESUserService:
     def index(cls, user: User):
         user_doc = UserDocument(
             meta={'id': str(user.id)},
+            id=str(user.id),
             name=user.name,
             email=user.email,
             role=user.role,
