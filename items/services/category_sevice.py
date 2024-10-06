@@ -26,3 +26,22 @@ class CategoryService:
             if raise_exception:
                 raise NotFound("Category not found")
             return None
+
+    @classmethod
+    def update(cls, instance: Category, validated: dict, partial=False, **kwargs) -> Category | None:
+        if partial:
+
+            instance.name = validated.get("name", instance.name)
+
+            parent_id = validated.get('parent_id')
+            if parent_id:
+                parent = cls.get(parent_id)
+                instance.parent = parent
+
+        else:
+            instance.name = validated.get('name')
+            parent_id = validated.get('parent_id')
+            instance.parent = cls.get(parent_id)
+
+        instance.save()
+        return instance

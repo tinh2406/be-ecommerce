@@ -33,4 +33,7 @@ class CategorySerializer(ModelSerializer):
         category = CategoryService.create(validated_data)
         return category
 
-
+    def update(self, instance, validated_data):
+        partial = validated_data.pop('partial', False)
+        instance = CategoryService.update(instance, validated_data, partial=partial)
+        return instance
