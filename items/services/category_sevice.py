@@ -45,3 +45,23 @@ class CategoryService:
 
         instance.save()
         return instance
+
+    @classmethod
+    def delete(cls, pk):
+        instance = cls.get(pk)
+        try:
+            instance.delete()
+        except Exception as e:
+            instance.deleted_at = timezone.now()
+            instance.save()
+        return True
+
+    @classmethod
+    def restore(cls, pk):
+        instance = cls.get(pk, allow_deleted=True)
+        instance.deleted_at=None
+        instance.save()
+        return True
+
+
+
