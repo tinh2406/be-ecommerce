@@ -23,3 +23,16 @@ class CategoryViewSet(ModelViewSet):
         category = CategoryService.get(pk)
         category_serializer = CategorySerializer(category)
         return Response(category_serializer.data)
+
+    def update(self, request, *args, **kwargs):
+        user = request.user
+        if not user or user.role != 1:
+            raise PermissionDenied("You cannot do this action")
+        pk = kwargs.get('pk')
+        partial = kwargs.get('partial', False)
+        instance = CategoryService.get(pk)
+        serializer = CategorySerializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(partial=partial)
+
+        return Response(serializer.data)
