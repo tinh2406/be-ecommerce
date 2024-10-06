@@ -1,21 +1,15 @@
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from django.core.exceptions import PermissionDenied
 
-from items.serializers import CategorySerializer
-from items.services import CategoryService
-
+from core.permission import Permission
+from items.serializers import CategorySerializer, QueryCategorySerializer
+from items.services import CategoryService, ESCategoryService
 
 class CategoryViewSet(ModelViewSet):
 
-    def create_check_permission(self, request):
-        user = request.user
-        if not user or user.role != 1:
-            raise PermissionDenied("You cannot do this action")
-
     def create(self, request, *args, **kwargs):
-        self.create_check_permission(request)
+        Permission.check_admin_permission(request)
 
         serializer = CategorySerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -29,7 +23,7 @@ class CategoryViewSet(ModelViewSet):
         return Response(category_serializer.data)
 
     def update(self, request, *args, **kwargs):
-        self.create_check_permission(request)
+        Permission.check_admin_permission(request)
 
         pk = kwargs.get('pk')
         partial = kwargs.get('partial', False)
@@ -41,7 +35,7 @@ class CategoryViewSet(ModelViewSet):
         return Response(serializer.data)
 
     def destroy(self, request, *args, **kwargs):
-        self.create_check_permission(request)
+        Permission.check_admin_permission(request)
 
         pk = kwargs.get('pk')
         CategoryService.delete(pk)
@@ -49,7 +43,13 @@ class CategoryViewSet(ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def restore(self, request, pk=None):
-        self.create_check_permission(request)
+        Permission.check_admin_permission(request)
 
         CategoryService.restore(pk)
         return Response(status=204)
+
+    def list(self, request, *args, **kwargs):
+        query = QueryCategorySerializer(data=request.query_params)
+        query.is_valid(raise_exception=True)
+        categories = ESCategoryService.search(query.data)
+        return Response(categories)
