@@ -1,6 +1,8 @@
 from json import load
 
-with open('/Users/nguyeqoctih/Code/python/jobs/static/address/wards.json') as f:
+from core.settings import BASE_DIR
+
+with open(f'{BASE_DIR}/static/address/wards.json') as f:
     wards = load(f)
 
 
