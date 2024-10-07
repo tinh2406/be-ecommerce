@@ -1,10 +1,12 @@
-from elasticsearch_dsl import Document, Text, Date, Integer
+from elasticsearch_dsl import Date, Document, Integer, Text
+
 
 class UserDocument(Document):
 
     class Index:
-        name = 'users'
+        name = "users"
 
+    id = Text()
     name = Text()
     email = Text()
     role = Integer()
@@ -14,4 +16,3 @@ class UserDocument(Document):
     deleted_at = Date()
     banned_at = Date()
     created_at = Date()
-

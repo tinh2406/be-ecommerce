@@ -1,9 +1,10 @@
-from elasticsearch_dsl import Document, Text, Date, Integer
+from elasticsearch_dsl import Date, Document, Text
+
 
 class CategoryDocument(Document):
 
     class Index:
-        name = 'categories'
+        name = "categories"
 
     id = Text()
     name = Text()
@@ -11,4 +12,3 @@ class CategoryDocument(Document):
 
     created_at = Date()
     deleted_at = Date()
-

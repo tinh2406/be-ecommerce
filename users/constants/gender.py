@@ -3,10 +3,6 @@ class Genders:
     FEMALE: int = 2
     OTHER: int = 3
 
-    CHOICES = (
-        (MALE, 'male'),
-        (FEMALE, 'female'),
-        (OTHER, 'other')
-    )
+    CHOICES = ((MALE, "male"), (FEMALE, "female"), (OTHER, "other"))
 
     DICT = dict(CHOICES)

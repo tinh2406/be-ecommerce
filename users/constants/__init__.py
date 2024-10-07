@@ -1,8 +1,15 @@
-from .role import Roles
-from .gender import Genders
-from .wards import Wards
-from .districts import Districts
-from .cities import Cities
+from .cities import Cities as Cities
+from .districts import Districts as Districts
+from .gender import Genders as Genders
+from .role import Roles as Roles
+from .wards import Wards as Wards
 
-UserOrderChoice = ['created_at', 'deleted_at', 'banned_at', 'name', 'email', 'phone', 'gender']
-
+UserOrderChoice = [
+    "created_at",
+    "deleted_at",
+    "banned_at",
+    "name",
+    "email",
+    "phone",
+    "gender",
+]

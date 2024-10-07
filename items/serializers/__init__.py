@@ -1,1 +1,2 @@
-from .category_serializer import CategorySerializer, QueryCategorySerializer
+from .category_serializer import CategorySerializer as CategorySerializer
+from .category_serializer import QueryCategorySerializer as QueryCategorySerializer

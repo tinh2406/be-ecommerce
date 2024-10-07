@@ -1,3 +1,3 @@
-from .item import Item
-from .category import Category
-from .item_inventory import ItemInventory
+from .category import Category as Category
+from .item import Item as Item
+from .item_inventory import ItemInventory as ItemInventory

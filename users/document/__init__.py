@@ -1,1 +1,1 @@
-from .user_document import UserDocument
+from .user_document import UserDocument as UserDocument

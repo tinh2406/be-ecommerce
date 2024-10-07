@@ -9,10 +9,7 @@ class JWTService:
 
     @staticmethod
     def get_header():
-        return {
-            "alg": "HS256",
-            "typ": "JWT"
-        }
+        return {"alg": "HS256", "typ": "JWT"}
 
     @staticmethod
     def get_secret_key():
@@ -20,25 +17,23 @@ class JWTService:
 
     @staticmethod
     def encode(user):
-        payload = {
-            "email": user.email,
-            "iat": datetime.now().timestamp()
-        }
+        payload = {"email": user.email, "iat": datetime.now().timestamp()}
 
-        token = jwt.encode(payload, JWTService.get_secret_key(), algorithm='HS256')
+        token = jwt.encode(payload, JWTService.get_secret_key(), algorithm="HS256")
         return token
 
     @staticmethod
     def decode(token, token_hours=12):
-        payload = jwt.decode(token, JWTService.get_secret_key(), algorithms=['HS256'])
+        payload = jwt.decode(token, JWTService.get_secret_key(), algorithms=["HS256"])
 
         iat = int(payload.get("iat"))
-        email = payload.get('email')
+        email = payload.get("email")
 
         if iat + token_hours * 60 * 60 < datetime.now().timestamp():
             return None
 
         from .user_service import UserService
+
         user = UserService.get_by_email(email)
         if user:
             return user
@@ -46,21 +41,20 @@ class JWTService:
 
     @staticmethod
     def create_verify_token(email):
-        payload = {
-            "email": email,
-            "iat": datetime.now().timestamp()
-        }
-        token = jwt.encode(payload, JWTService.get_secret_key(), algorithm='HS256')
+        payload = {"email": email, "iat": datetime.now().timestamp()}
+        token = jwt.encode(payload, JWTService.get_secret_key(), algorithm="HS256")
         return token
 
     @staticmethod
     def confirm_verify_token(token):
         try:
-            payload = jwt.decode(token, JWTService.get_secret_key(), algorithms=['HS256'])
-            if payload.get('iat') + 5 * 60 < datetime.now().timestamp():
-                raise ValidationError('Token expired')
+            payload = jwt.decode(
+                token, JWTService.get_secret_key(), algorithms=["HS256"]
+            )
+            if payload.get("iat") + 5 * 60 < datetime.now().timestamp():
+                raise ValidationError("Token expired")
             return {
-                "email": payload.get('email'),
+                "email": payload.get("email"),
             }
-        except:
-            raise ValidationError({'token': 'Invalid token'})
+        except Exception:
+            raise ValidationError({"token": "Invalid token"})

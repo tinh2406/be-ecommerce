@@ -11,16 +11,16 @@ class ProfileService:
     @classmethod
     def update(cls, instance: Profile, data: dict, partial=False, **kwargs) -> Profile:
         if partial:
-            instance.phone = data.get('phone', instance.phone)
-            instance.birthday = data.get('birthday', instance.birthday)
-            instance.gender = data.get('gender', instance.gender)
-            instance.image = data.get('image', instance.image)
+            instance.phone = data.get("phone", instance.phone)
+            instance.birthday = data.get("birthday", instance.birthday)
+            instance.gender = data.get("gender", instance.gender)
+            instance.image = data.get("image", instance.image)
         else:
-            instance.phone = data.get('phone')
-            instance.birthday = data.get('birthday')
-            instance.gender = data.get('gender')
-            instance.image = data.get('image')
-        
+            instance.phone = data.get("phone")
+            instance.birthday = data.get("birthday")
+            instance.gender = data.get("gender")
+            instance.image = data.get("image")
+
         instance.save()
 
         user_doc = UserDocument.get(id=instance.user.id)
@@ -30,5 +30,3 @@ class ProfileService:
             gender=instance.gender,
         )
         return instance
-
-

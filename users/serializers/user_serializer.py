@@ -1,19 +1,25 @@
-from rest_framework.serializers import Serializer, EmailField, CharField, \
-    ValidationError, ModelSerializer, DateField, ChoiceField, BooleanField, \
-    DateTimeField
 from django.core.validators import RegexValidator
+from rest_framework.serializers import (
+    BooleanField,
+    CharField,
+    ChoiceField,
+    DateField,
+    DateTimeField,
+    EmailField,
+    ModelSerializer,
+    Serializer,
+    ValidationError,
+)
 
-from core.common import BaseQuerySerializer
-from users.models import User
-from users.services import UserService, ProfileService
+from core.utils import BaseQuerySerializer
 from users.constants import Genders, Roles, UserOrderChoice
+from users.models import User
+from users.services import ProfileService, UserService
 
 
 class RegisterSerializer(Serializer):
     email = EmailField()
-    password = CharField(validators=[
-
-    ])
+    password = CharField(validators=[])
     re_password = CharField()
     name = CharField()
 
@@ -21,10 +27,10 @@ class RegisterSerializer(Serializer):
         return UserService.create(validated_data)
 
     def validate(self, attrs):
-        user = UserService.get_by_email(attrs['email'], raise_exception=False)
+        user = UserService.get_by_email(attrs["email"], raise_exception=False)
         if user:
             raise ValidationError({"email": "Email already exists"}, 400)
-        if attrs['password'] != attrs['re_password']:
+        if attrs["password"] != attrs["re_password"]:
             raise ValidationError({"password": "Password does not match"}, 400)
         return attrs
 
@@ -34,8 +40,8 @@ class LoginSerializer(Serializer):
     password = CharField()
 
     def create(self, validated_data):
-        email = validated_data.get('email')
-        password = validated_data.get('password')
+        email = validated_data.get("email")
+        password = validated_data.get("password")
         return UserService.login(email, password)
 
 
@@ -44,7 +50,7 @@ class ChangeEmailSerializer(Serializer):
     email = EmailField()
 
     def validate(self, attrs):
-        user = UserService.get_by_email(attrs['email'], raise_exception=False)
+        user = UserService.get_by_email(attrs["email"], raise_exception=False)
         if user:
             raise ValidationError({"email": "Email already exists"}, 400)
         return attrs
@@ -56,7 +62,7 @@ class UpdatePasswordSerializer(Serializer):
     re_new_password = CharField()
 
     def validate(self, attrs):
-        if attrs['new_password'] != attrs['re_new_password']:
+        if attrs["new_password"] != attrs["re_new_password"]:
             raise ValidationError({"new_password": "New password does not match"}, 400)
         return attrs
 
@@ -71,7 +77,7 @@ class UpdatePasswordWithTokenSerializer(Serializer):
     re_new_password = CharField()
 
     def validate(self, attrs):
-        if attrs['new_password'] != attrs['re_new_password']:
+        if attrs["new_password"] != attrs["re_new_password"]:
             raise ValidationError({"new_password": "New password does not match"}, 400)
 
         return attrs
@@ -85,8 +91,8 @@ class UpdateRoleSerializer(Serializer):
     role = ChoiceField(choices=Roles.CHOICES)
 
     def validate(self, attrs):
-        if attrs['role'] == Roles.ADMIN:
-            raise ValidationError('You cannot update to admin role')
+        if attrs["role"] == Roles.ADMIN:
+            raise ValidationError("You cannot update to admin role")
 
         return attrs
 
@@ -108,43 +114,46 @@ class QueryUserSerializer(BaseQuerySerializer):
     created_to = DateTimeField(allow_null=True, required=False)
 
     # override
-    order_by = ChoiceField(allow_null=True, required=False,
-                           choices=UserOrderChoice)
+    order_by = ChoiceField(allow_null=True, required=False, choices=UserOrderChoice)
 
 
 class UserSerializer(ModelSerializer):
     class Meta:
         model = User
-        fields = '__all__'
-        read_only_fields = ('id', 'created_at', 'deleted_at', 'banned_at')
+        fields = "__all__"
+        read_only_fields = ("id", "created_at", "deleted_at", "banned_at")
 
     name = CharField()
     birthday = DateField(allow_null=True)
-    phone = CharField(max_length=11, allow_null=True, validators=[
-        RegexValidator(r'^\d{10}$', message='Phone number must be 11 digits')
-    ])
+    phone = CharField(
+        max_length=11,
+        allow_null=True,
+        validators=[
+            RegexValidator(r"^\d{10}$", message="Phone number must be 11 digits")
+        ],
+    )
     image = CharField(max_length=255, allow_null=True)
     gender = ChoiceField(choices=Genders.CHOICES, allow_null=True)
 
     def to_representation(self, instance):
         return {
-            'id': instance.id,
-            'name': instance.name,
-            'email': instance.email,
-            'birthday': instance.profile.birthday,
-            'phone': instance.profile.phone,
-            'gender': instance.profile.gender,
-            'gender_name':instance.profile.gender_name,
-            'image': instance.profile.image,
-            'role': instance.role,
-            'role_name': instance.role_name,
-            'created_at': instance.created_at,
-            'deleted_at': instance.deleted_at,
-            'banned_at': instance.banned_at,
+            "id": instance.id,
+            "name": instance.name,
+            "email": instance.email,
+            "birthday": instance.profile.birthday,
+            "phone": instance.profile.phone,
+            "gender": instance.profile.gender,
+            "gender_name": instance.profile.gender_name,
+            "image": instance.profile.image,
+            "role": instance.role,
+            "role_name": instance.role_name,
+            "created_at": instance.created_at,
+            "deleted_at": instance.deleted_at,
+            "banned_at": instance.banned_at,
         }
 
     def update(self, instance, validated_data):
-        partial = validated_data.pop('partial', False)
+        partial = validated_data.pop("partial", False)
         UserService.update(instance, validated_data, partial=partial)
         ProfileService.update(instance.profile, validated_data, partial=partial)
         return instance

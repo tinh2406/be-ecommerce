@@ -359,7 +359,7 @@
        "code": "947",
        "parent_code": "94"
    },
-   {   
+   {
        "name": "Ngã Năm",
        "type": "thi-xa",
        "slug": "nga-nam",
@@ -6209,7 +6209,7 @@
        "code": "195",
        "parent_code": "22"
    },
-   {   
+   {
        "name": "Uông Bí",
        "type": "thanh-pho",
        "slug": "uong-bi",
@@ -6289,7 +6289,7 @@
        "code": "204",
        "parent_code": "22"
    },
-   {  
+   {
        "name": "Đông Triều",
        "type": "thi-xa",
        "slug": "dong-trieu",

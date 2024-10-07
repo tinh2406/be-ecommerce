@@ -12,20 +12,20 @@ class JWTAuthentication(BaseAuthentication):
             return None
 
         if len(auth) < 2:
-            msg = 'Invalid token header. No credentials provided.'
+            msg = "Invalid token header. No credentials provided."
             raise exceptions.AuthenticationFailed(msg)
 
         try:
             token = auth[1].decode()
         except UnicodeError:
-            msg = 'Invalid token header. Token string should not contain invalid characters.'
+            msg = "Invalid token header. Token string should not contain invalid characters."
             raise exceptions.AuthenticationFailed(msg)
 
         try:
             user = JWTService.decode(token, 12)
             if not user.is_active:
-                raise exceptions.AuthenticationFailed('User inactive or deleted.')
-        except:
-            raise exceptions.AuthenticationFailed('Invalid token.')
+                raise exceptions.AuthenticationFailed("User inactive or deleted.")
+        except Exception:
+            raise exceptions.AuthenticationFailed("Invalid token.")
 
         return user, token

@@ -1,13 +1,18 @@
-import pickle
 import uuid
 
 from django.conf import settings
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import PermissionsMixin
-from django.db.models import UUIDField, EmailField, CharField, DateTimeField, IntegerField
+from django.db.models import (
+    CharField,
+    DateTimeField,
+    EmailField,
+    IntegerField,
+    UUIDField,
+)
 
-from core.common import BaseTimeModel
+from core.models import BaseTimeModel
 from users.constants import Roles
 from users.managers import UserManager
 
@@ -21,14 +26,14 @@ class User(AbstractBaseUser, PermissionsMixin, BaseTimeModel):
 
     banned_at = DateTimeField(null=True, blank=True)
 
-    USERNAME_FIELD = 'email'
-    key = 'user_'
-    cache_fields = ['id', 'email']
+    USERNAME_FIELD = "email"
+    key: str = "user_"
+    cache_fields = ["id", "email"]
 
     objects = UserManager()
 
     class Meta:
-        db_table = 'users'
+        db_table = "users"
 
     def set_password(self, raw_password):
         self.password = make_password(raw_password, salt=settings.SECRET_KEY)
@@ -37,4 +42,3 @@ class User(AbstractBaseUser, PermissionsMixin, BaseTimeModel):
     @property
     def role_name(self):
         return Roles.DICT.get(self.role)
-

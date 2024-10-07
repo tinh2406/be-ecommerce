@@ -1,4 +1,3 @@
-from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.template.loader import render_to_string
@@ -8,17 +7,17 @@ from rest_framework.exceptions import NotFound
 from users.constants import Roles
 from users.models import User
 from users.services.es_user_service import ESUserService
-from users.services.profile_service import ProfileService
 from users.services.jwt_service import JWTService
+from users.services.profile_service import ProfileService
 from users.tasks import send_email_task
 
 
 class UserService:
     @classmethod
     def create(cls, validated, **kwargs) -> User:
-        email = validated.get('email')
-        password = validated.get('password')
-        name = validated.get('name')
+        email = validated.get("email")
+        password = validated.get("password")
+        name = validated.get("name")
         with transaction.atomic():
             user = User.objects.create_user(email=email, password=password, name=name)
             ProfileService.create(user=user)
@@ -26,90 +25,109 @@ class UserService:
         return user
 
     @classmethod
-    def get_by_email(cls, email, raise_exception=True, allow_deleted=False, allow_banned=False,
-                     use_cache=True, **kwargs) -> User | None:
+    def get_by_email(
+        cls,
+        email,
+        raise_exception=True,
+        allow_deleted=False,
+        allow_banned=False,
+        use_cache=True,
+        **kwargs,
+    ) -> User | None:
         try:
-            user = User.cache_load(email=email) if use_cache else User.objects.get(email=email)
+            user = (
+                User.cache_load(email=email)
+                if use_cache
+                else User.objects.get(email=email)
+            )
 
             if not allow_deleted and user.deleted_at:
-                raise NotFound('User not found')
+                raise NotFound("User not found")
             if not allow_banned and user.banned_at:
-                raise NotFound('User not found')
+                raise NotFound("User not found")
             return user
-        except Exception as e:
+        except Exception:
             if raise_exception:
-                raise NotFound('User not found')
+                raise NotFound("User not found")
             return None
 
     @classmethod
-    def get(cls, pk, raise_exception=True, allow_deleted=False, allow_banned=False, use_cache=True,
-            **kwargs) -> User | None:
+    def get(
+        cls,
+        pk,
+        raise_exception=True,
+        allow_deleted=False,
+        allow_banned=False,
+        use_cache=True,
+        **kwargs,
+    ) -> User | None:
         try:
             user = User.cache_load(pk=pk) if use_cache else User.objects.get(pk=pk)
             if not allow_deleted and user.deleted_at:
-                raise NotFound('User not found')
+                raise NotFound("User not found")
             if not allow_banned and user.banned_at:
-                raise NotFound('User not found')
+                raise NotFound("User not found")
             return user
-        except Exception as e:
+        except Exception:
             if raise_exception:
-                raise NotFound('User not found')
+                raise NotFound("User not found")
             return None
 
     @classmethod
     def login(cls, email, password, **kwargs) -> dict:
         user = cls.get_by_email(email)
-        if not user.check_password(password):
-            raise NotFound('User not found')
+
+        if not user or not user.check_password(password):
+            raise NotFound("User not found")
         return {
-            'user': {
-                'id': str(user.id),
-                'name': user.name,
-                'email': user.email,
-                'role': user.role,
+            "user": {
+                "id": str(user.id),
+                "name": user.name,
+                "email": user.email,
+                "role": user.role,
             },
-            'token': JWTService.encode(user)
+            "token": JWTService.encode(user),
         }
 
     @classmethod
     def update(cls, instance: User, validated: dict, partial=False, **kwargs) -> User:
         if partial:
-            instance.name = validated.get('name', instance.name)
+            instance.name = validated.get("name", instance.name)
         else:
-            instance.name = validated.get('name')
+            instance.name = validated.get("name")
         instance.save()
         ESUserService.update(instance, instance.profile)
         return instance
 
     @classmethod
     def request_token(cls, email, **kwargs) -> str:
-        user = cls.get_by_email(email)
+        cls.get_by_email(email)
         token = JWTService.create_verify_token(email)
-        content = render_to_string('../templates/reset_password.html', {
-            'token': token
-        })
-        send_email_task.delay([email], 'Reset password', content)
+        content = render_to_string("../templates/reset_password.html", {"token": token})
+        send_email_task.delay([email], "Reset password", content)
         return token
 
     @classmethod
     def update_email(cls, validated_data, **kwargs) -> bool:
-        token = validated_data.get('token')
-        new_email = validated_data.get('email')
+        token = validated_data.get("token")
+        new_email = validated_data.get("email")
 
-        email = JWTService.confirm_verify_token(token).get('email')
+        email = JWTService.confirm_verify_token(token).get("email")
         instance = cls.get_by_email(email)
-        instance.email = new_email
-        instance.save()
-        ESUserService.update(instance, instance.profile)
-        return True
+        if instance:
+            instance.email = new_email
+            instance.save()
+            ESUserService.update(instance, instance.profile)
+            return True
+        return False
 
     @classmethod
     def update_password(cls, instance: User, validated_data: dict, **kwargs) -> bool:
-        old_password = validated_data.get('old_password')
-        new_password = validated_data.get('new_password')
+        old_password = validated_data.get("old_password")
+        new_password = validated_data.get("new_password")
 
         if not instance.check_password(old_password):
-            raise PermissionDenied('Old password is incorrect')
+            raise PermissionDenied("Old password is incorrect")
 
         instance.set_password(new_password)
         instance.save()
@@ -117,11 +135,14 @@ class UserService:
 
     @classmethod
     def update_password_with_token(cls, validated_data: dict, **kwargs) -> bool:
-        token = validated_data.get('token')
-        new_password = validated_data.get('new_password')
+        token = validated_data.get("token")
+        new_password = validated_data.get("new_password")
 
-        email = JWTService.confirm_verify_token(token).get('email')
+        email = JWTService.confirm_verify_token(token).get("email")
         instance = cls.get_by_email(email)
+        if not instance:
+            return False
+
         instance.set_password(new_password)
         instance.save()
         return True
@@ -129,12 +150,13 @@ class UserService:
     @classmethod
     def delete(cls, pk, **kwargs) -> bool:
         instance = cls.get(pk, allow_banned=True)
-
+        if not instance:
+            return False
         try:
             instance.delete()
             ESUserService.delete(str(pk))
 
-        except Exception as e:
+        except Exception:
             instance.deleted_at = timezone.now()
             instance.save()
             ESUserService.update(user=instance, profile=instance.profile)
@@ -143,6 +165,9 @@ class UserService:
     @classmethod
     def restore(cls, pk, **kwargs) -> bool:
         instance = cls.get(pk, allow_banned=True, allow_deleted=True)
+        if not instance:
+            return False
+
         instance.deleted_at = None
         instance.save()
         ESUserService.update(user=instance, profile=instance.profile)
@@ -151,6 +176,9 @@ class UserService:
     @classmethod
     def ban(cls, pk, **kwargs) -> bool:
         instance = cls.get(pk)
+        if not instance:
+            return False
+
         instance.banned_at = timezone.now()
         instance.save()
         ESUserService.update(user=instance, profile=instance.profile)
@@ -159,6 +187,9 @@ class UserService:
     @classmethod
     def unban(cls, pk, **kwargs) -> bool:
         instance = cls.get(pk, allow_banned=True)
+        if not instance:
+            return False
+
         instance.banned_at = None
         instance.save()
         ESUserService.update(user=instance, profile=instance.profile)
@@ -171,14 +202,12 @@ class UserService:
 
         if user.role == Roles.ADMIN:
             if instance.role == Roles.ADMIN:
-                raise PermissionDenied('You do not have permission to update role')
+                raise PermissionDenied("You do not have permission to update role")
             if role == Roles.ADMIN:
-                raise PermissionDenied('You cannot update to admin role')
+                raise PermissionDenied("You cannot update to admin role")
 
             instance.role = role
 
         instance.save()
         ESUserService.update(instance, instance.profile)
         return True
-
-
