@@ -1,6 +1,12 @@
-from rest_framework.serializers import ModelSerializer, CharField, BooleanField, DateTimeField, ChoiceField
+from rest_framework.serializers import (
+    BooleanField,
+    CharField,
+    ChoiceField,
+    DateTimeField,
+    ModelSerializer,
+)
 
-from core.common import BaseQuerySerializer
+from core.utils import BaseQuerySerializer
 from items.constants import CategoryOrderChoice
 from items.models import Category
 from items.services import CategoryService
@@ -9,24 +15,24 @@ from items.services import CategoryService
 class CategorySerializer(ModelSerializer):
     class Meta:
         model = Category
-        fields = '__all__'
-        read_only_fields = ('id', 'created_at', 'deleted_at')
+        fields = "__all__"
+        read_only_fields = ("id", "created_at", "deleted_at")
 
     parent_id = CharField(max_length=255, required=False, allow_null=True)
 
     def validate(self, attrs):
-        if 'parent_id' in attrs:
-            parent_id = attrs.get('parent_id')
+        if "parent_id" in attrs:
+            parent_id = attrs.get("parent_id")
             if parent_id:
                 parent = CategoryService.get(parent_id)
-                attrs['parent'] = parent
+                attrs["parent"] = parent
         return attrs
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
         if instance.parent_id:
             parent = CategoryService.get(instance.parent_id)
-            data['parent'] = parent.name
+            data["parent"] = parent.name
         return data
 
     def create(self, validated_data):
@@ -34,12 +40,13 @@ class CategorySerializer(ModelSerializer):
         return category
 
     def update(self, instance, validated_data):
-        partial = validated_data.pop('partial', False)
+        partial = validated_data.pop("partial", False)
         instance = CategoryService.update(instance, validated_data, partial=partial)
         return instance
 
+
 class QueryCategorySerializer(BaseQuerySerializer):
-    parent_id = CharField(allow_blank=True, allow_null=True, required=False),
+    parent_id = (CharField(allow_blank=True, allow_null=True, required=False),)
 
     is_deleted = BooleanField(allow_null=True, required=False)
     is_all = BooleanField(allow_null=True, required=False)
@@ -49,9 +56,4 @@ class QueryCategorySerializer(BaseQuerySerializer):
     created_to = DateTimeField(allow_null=True, required=False)
 
     # override
-    order_by = ChoiceField(allow_null=True, required=False,
-                           choices=CategoryOrderChoice)
-
-
-
-
+    order_by = ChoiceField(allow_null=True, required=False, choices=CategoryOrderChoice)

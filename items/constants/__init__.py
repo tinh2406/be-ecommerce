@@ -1,1 +1,1 @@
-CategoryOrderChoice = ['created_at', 'deleted_at', 'name']
+CategoryOrderChoice = ["created_at", "deleted_at", "name"]

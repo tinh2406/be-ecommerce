@@ -78,10 +78,7 @@ THIRD_PARTY_APPS = (
     "bandit",
     "django_nose",
 )
-LOCAL_APPS = (
-    "users",
-    "items"
-)
+LOCAL_APPS = ("users", "items")
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 AUTH_USER_MODEL = "users.User"
@@ -124,9 +121,9 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        'users.services.authentication.JWTAuthentication',
+        "users.services.authentication.JWTAuthentication",
     ],
-    "DEFAULT_PAGINATION_CLASS": "core.common.BasePagination",
+    "DEFAULT_PAGINATION_CLASS": "core.utils.BasePagination",
     "PAGE_SIZE": 12,
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
     "TEST_REQUEST_DEFAULT_FORMAT": "json",

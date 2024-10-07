@@ -8,29 +8,21 @@ from users.models import Address
 class AddressService:
     @classmethod
     def list_cities(cls, name=None, **kwargs):
-        cache_key = f'list_cities'
+        cache_key = "list_cities"
         if name:
             name = name[0].lower()
-            cache_key += f'_{name}'
+            cache_key += f"_{name}"
 
         cities = cache.get(cache_key)
         if cities is None:
             if name:
                 cities = [
-                    {
-                        'id': city[0],
-                        'name': city[1]
-                    }
-                    for city in Cities.CHOICES if city[1].lower().find(name) != -1
+                    {"id": city[0], "name": city[1]}
+                    for city in Cities.CHOICES
+                    if city[1].lower().find(name) != -1
                 ]
             else:
-                cities = [
-                    {
-                        'id': city[0],
-                        'name': city[1]
-                    }
-                    for city in Cities.CHOICES
-                ]
+                cities = [{"id": city[0], "name": city[1]} for city in Cities.CHOICES]
 
         cache.set(cache_key, cities)
         return cities
@@ -41,26 +33,21 @@ class AddressService:
 
     @classmethod
     def list_districts(cls, city_id, name=None, **kwargs):
-        cache_key = f'list_districts_{city_id}'
+        cache_key = f"list_districts_{city_id}"
         if name:
             name = name[0].lower()
-            cache_key += f'_{name}'
+            cache_key += f"_{name}"
         districts = cache.get(cache_key)
         if districts is None:
             if name:
                 districts = [
-                    {
-                        'id': district[0],
-                        'name': district[1]
-                    }
-                    for district in Districts(city_id).CHOICES if district[1].lower().find(name) != -1
+                    {"id": district[0], "name": district[1]}
+                    for district in Districts(city_id).CHOICES
+                    if district[1].lower().find(name) != -1
                 ]
             else:
                 districts = [
-                    {
-                        'id': district[0],
-                        'name': district[1]
-                    }
+                    {"id": district[0], "name": district[1]}
                     for district in Districts(city_id).CHOICES
                 ]
         cache.set(cache_key, districts)
@@ -72,26 +59,21 @@ class AddressService:
 
     @classmethod
     def list_wards(cls, district_id, name=None, **kwargs):
-        cache_key = f'list_wards_{district_id}'
+        cache_key = f"list_wards_{district_id}"
         if name:
             name = name[0].lower()
-            cache_key += f'_{name}'
+            cache_key += f"_{name}"
         wards = cache.get(cache_key)
         if wards is None:
             if name:
                 wards = [
-                    {
-                        'id': ward[0],
-                        'name': ward[1]
-                    }
-                    for ward in Wards(district_id).CHOICES if ward[1].lower().find(name) != -1
+                    {"id": ward[0], "name": ward[1]}
+                    for ward in Wards(district_id).CHOICES
+                    if ward[1].lower().find(name) != -1
                 ]
             else:
                 wards = [
-                    {
-                        'id': ward[0],
-                        'name': ward[1]
-                    }
+                    {"id": ward[0], "name": ward[1]}
                     for ward in Wards(district_id).CHOICES
                 ]
         cache.set(cache_key, wards)
@@ -114,40 +96,40 @@ class AddressService:
         return queryset
 
     @classmethod
-    def get(cls, address_id, user_id=None, raise_exception=True, **kwargs) -> Address | None:
+    def get(
+        cls, address_id, user_id=None, raise_exception=True, **kwargs
+    ) -> Address | None:
         try:
             address = Address.cache_load(id=address_id)
             if user_id and address.user_id != user_id:
-                raise NotFound('Address is not found')
+                raise NotFound("Address is not found")
             return address
-        except Exception as e:
+        except Exception:
             if raise_exception:
-                raise NotFound('Address is not found')
+                raise NotFound("Address is not found")
             return None
 
     @classmethod
     def create(cls, user_id, city, district, ward, detail, **kwargs) -> Address:
         address = Address.objects.create(
-            user_id=user_id,
-            city=city,
-            district=district,
-            ward=ward,
-            detail=detail
+            user_id=user_id, city=city, district=district, ward=ward, detail=detail
         )
         return address
 
     @classmethod
-    def update(cls, instance: Address, validated: dict, partial=False, **kwargs) -> Address:
+    def update(
+        cls, instance: Address, validated: dict, partial=False, **kwargs
+    ) -> Address:
         if partial:
-            instance.city = validated.get('city', instance.city)
-            instance.district = validated.get('district', instance.district)
-            instance.ward = validated.get('ward', instance.ward)
-            instance.detail = validated.get('detail', instance.detail)
+            instance.city = validated.get("city", instance.city)
+            instance.district = validated.get("district", instance.district)
+            instance.ward = validated.get("ward", instance.ward)
+            instance.detail = validated.get("detail", instance.detail)
         else:
-            instance.city = validated.get('city')
-            instance.district = validated.get('district')
-            instance.ward = validated.get('ward')
-            instance.detail = validated.get('detail')
+            instance.city = validated.get("city")
+            instance.district = validated.get("district")
+            instance.ward = validated.get("ward")
+            instance.detail = validated.get("detail")
 
         instance.save()
         return instance
@@ -155,5 +137,6 @@ class AddressService:
     @classmethod
     def delete(cls, address_id, user_id=None, **kwargs) -> bool:
         address = cls.get(address_id, user_id)
-        address.delete()
+        if address:
+            address.delete()
         return True
