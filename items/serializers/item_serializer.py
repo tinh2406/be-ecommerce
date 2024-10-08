@@ -52,7 +52,7 @@ class ItemSerializer(ModelSerializer):
                 total_variants *= len(attribute["values"])
 
             # Kiểm tra xem số lượng variants đã nhập vào có đủ không
-            variant_set = set()  # Dùng set để xác định số lượng variants khác nhau
+            variant_dict = dict()  # Dùng dict để kiểm tra xem có trùng variants không
             for variant in attrs["variants"]:
                 variant_key = ""
                 for attribute_name in attribute_names:
@@ -71,9 +71,7 @@ class ItemSerializer(ModelSerializer):
                         )
                     variant_key += f"{variant_value}|"  # Tạo key cho variant
 
-                variant_set.add(
-                    variant_key
-                )  # Ví dụ key: "S|red|", "M|red|", "S|blue|", "M|blue|"
+                variant_dict[variant_key] = variant  # Ví dụ key: "S|red|", "M|red|", "S|blue|", "M|blue|"
 
                 # Kiểm tra các thuộc tính cần thiết
                 if "price" not in variant:
@@ -82,10 +80,11 @@ class ItemSerializer(ModelSerializer):
                     raise ValidationError({"image": "This field is required"})
 
             # Kiểm tra xem số lượng variants đã nhập vào có đủ không
-            if len(variant_set) != total_variants:
+            if len(variant_dict) != total_variants:
                 raise ValidationError(
                     {"variants": "The number of variants is not enough"}
                 )
+            attrs["variants"] = list(variant_dict.values())
 
         return attrs
 
