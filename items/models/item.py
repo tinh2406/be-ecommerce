@@ -1,5 +1,7 @@
+import pickle
 import uuid
 
+from django.core.cache import cache
 from django.db.models import (
     PROTECT,
     CharField,
@@ -11,6 +13,7 @@ from django.db.models import (
 )
 
 from core.models import BaseTimeModel
+from items.utils.representation_item import representation_item
 
 
 class Item(BaseTimeModel):
@@ -28,3 +31,19 @@ class Item(BaseTimeModel):
 
     class Meta:
         db_table = "items"
+
+    @classmethod
+    def cache_load(cls, **kwargs):
+        id = kwargs.get("id")
+        key_cache = f"{cls.key}{id}"
+
+        pickled_object = cache.get(key_cache)
+        if pickled_object:
+            obj = pickle.loads(pickled_object)
+        else:
+            obj = cls.objects.get(id=id)
+            obj = representation_item(obj)
+            pickled_object = pickle.dumps(obj)
+
+        cache.set(key_cache, pickled_object, timeout=cls.cache_time)
+        return obj

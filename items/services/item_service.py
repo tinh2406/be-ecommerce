@@ -1,3 +1,5 @@
+from rest_framework.exceptions import NotFound
+
 from items.models import Item
 from items.serializers.simple_item_serializer import SimpleItemSerializer
 
@@ -37,3 +39,17 @@ class ItemService:
         ESItemService.index.delay(serializer.data)
 
         return item
+
+    @classmethod
+    def get(
+        cls, pk, raise_exception=True, allow_deleted=False, use_cache=True, **kwargs
+    ) -> Item | None:
+        try:
+            item = Item.cache_load(id=pk) if use_cache else Item.objects.get(pk=pk)
+            if not allow_deleted and item.get("deleted_at"):
+                raise NotFound("Item not found")
+            return item
+        except Exception:
+            if raise_exception:
+                raise NotFound("Item not found")
+            return None
