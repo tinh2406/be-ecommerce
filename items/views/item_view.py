@@ -3,6 +3,7 @@ from rest_framework.viewsets import ModelViewSet
 
 from core.permission import Permission
 from items.serializers import ItemSerializer
+from items.services import ItemService
 
 
 class ItemViewSet(ModelViewSet):
@@ -14,3 +15,8 @@ class ItemViewSet(ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+    def retrieve(self, request, *args, **kwargs):
+        pk = kwargs.get("pk")
+        instance = ItemService.get(pk)
+        return Response(instance)
