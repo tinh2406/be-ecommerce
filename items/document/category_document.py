@@ -1,4 +1,4 @@
-from elasticsearch_dsl import Date, Document, Text
+from elasticsearch_dsl import Date, Document, Keyword, Text
 
 
 class CategoryDocument(Document):
@@ -8,7 +8,7 @@ class CategoryDocument(Document):
 
     id = Text()
     name = Text()
-    parent_id = Text()
+    parent_id = Keyword()
 
     created_at = Date()
     deleted_at = Date()
