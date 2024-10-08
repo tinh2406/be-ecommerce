@@ -55,6 +55,8 @@ class ItemAttributeService:
                 hot_price=variant.pop("hot_price", None),
             )
             for name, value in list(variant.items()):
+                if f"{name}_{value}" not in item_attributes:
+                    continue
                 item_variant.attributes.create(
                     item_attribute_value_id=item_attributes[f"{name}_{value}"]
                 )
