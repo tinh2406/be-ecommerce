@@ -3,6 +3,7 @@ from rest_framework.exceptions import NotFound
 
 from items.models import Category
 
+from ..utils.simple_category_serializer import SimpleCategorySerializer
 from .es_category_service import ESCategoryService
 
 
@@ -14,7 +15,9 @@ class CategoryService:
         parent_id = validated.get("parent_id")
 
         category = Category.objects.create(name=name, parent_id=parent_id)
-        ESCategoryService.index(category)
+
+        serializer = SimpleCategorySerializer(category)
+        ESCategoryService.index.delay(serializer.data)
         return category
 
     @classmethod
@@ -49,7 +52,8 @@ class CategoryService:
             instance.parent_id = validated.get("parent_id")
 
         instance.save()
-        ESCategoryService.update(instance)
+        serializer = SimpleCategorySerializer(instance)
+        ESCategoryService.index.delay(serializer.data)
         return instance
 
     @classmethod
@@ -57,11 +61,12 @@ class CategoryService:
         instance = cls.get(pk)
         try:
             instance.delete()
-            ESCategoryService.delete(pk)
+            ESCategoryService.delete.delay(pk)
         except Exception:
             instance.deleted_at = timezone.now()
             instance.save()
-            ESCategoryService.update(instance)
+            serializer = SimpleCategorySerializer(instance)
+            ESCategoryService.index.delay(serializer.data)
         return True
 
     @classmethod
@@ -69,5 +74,6 @@ class CategoryService:
         instance = cls.get(pk, allow_deleted=True)
         instance.deleted_at = None
         instance.save()
-        ESCategoryService.update(instance)
+        serializer = SimpleCategorySerializer(instance)
+        ESCategoryService.index.delay(serializer.data)
         return True

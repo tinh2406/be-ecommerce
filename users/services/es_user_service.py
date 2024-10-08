@@ -1,40 +1,44 @@
+from celery import shared_task
 from elasticsearch_dsl.query import Exists, Range, Term
 
 from users.document import UserDocument
-from users.models import Profile, User
 
 
 class ESUserService:
 
-    @classmethod
-    def index(cls, user: User):
+    @staticmethod
+    @shared_task
+    def index(user: dict):
         user_doc = UserDocument(
-            meta={"id": str(user.id)},
-            name=user.name,
-            email=user.email,
-            role=user.role,
-            created_at=user.created_at,
+            meta={"id": user.get("id")},
+            id=user.get("id"),
+            name=user.get("name"),
+            email=user.get("email"),
+            role=user.get("role"),
+            created_at=user.get("created_at"),
         )
         return user_doc.save()
 
-    @classmethod
-    def update(cls, user: User, profile: Profile):
-        user_doc = UserDocument.get(id=str(user.id))
+    @staticmethod
+    @shared_task
+    def update(user: dict):
+        user_doc = UserDocument.get(id=user.get("id"))
         user_doc.update(
-            name=user.name,
-            email=user.email,
-            role=user.role,
-            created_at=user.created_at,
-            deleted_at=user.deleted_at,
-            banned_at=user.banned_at,
-            birthday=profile.birthday,
-            phone=profile.phone,
-            gender=profile.gender,
+            name=user.get("name"),
+            email=user.get("email"),
+            role=user.get("role"),
+            created_at=user.get("created_at"),
+            deleted_at=user.get("deleted_at"),
+            banned_at=user.get("banned_at"),
+            birthday=user.get("birthday"),
+            phone=user.get("phone"),
+            gender=user.get("gender"),
         )
         return user_doc.save()
 
-    @classmethod
-    def delete(cls, pk):
+    @staticmethod
+    @shared_task
+    def delete(pk):
         user_doc = UserDocument.get(id=pk)
         return user_doc.delete()
 

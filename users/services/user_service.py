@@ -10,6 +10,7 @@ from users.services.es_user_service import ESUserService
 from users.services.jwt_service import JWTService
 from users.services.profile_service import ProfileService
 from users.tasks import send_email_task
+from users.utils.simple_user_serializer import SimpleUserSerializer
 
 
 class UserService:
@@ -21,7 +22,9 @@ class UserService:
         with transaction.atomic():
             user = User.objects.create_user(email=email, password=password, name=name)
             ProfileService.create(user=user)
-            ESUserService.index(user)
+
+        serializer = SimpleUserSerializer(user)
+        ESUserService.index.delay(serializer.data)
         return user
 
     @classmethod
@@ -95,8 +98,8 @@ class UserService:
             instance.name = validated.get("name", instance.name)
         else:
             instance.name = validated.get("name")
-        instance.save()
-        ESUserService.update(instance, instance.profile)
+
+        cls.save_data(instance)
         return instance
 
     @classmethod
@@ -116,8 +119,7 @@ class UserService:
         instance = cls.get_by_email(email)
         if instance:
             instance.email = new_email
-            instance.save()
-            ESUserService.update(instance, instance.profile)
+            cls.save_data(instance)
             return True
         return False
 
@@ -130,7 +132,7 @@ class UserService:
             raise PermissionDenied("Old password is incorrect")
 
         instance.set_password(new_password)
-        instance.save()
+        cls.save_data(instance)
         return True
 
     @classmethod
@@ -144,7 +146,7 @@ class UserService:
             return False
 
         instance.set_password(new_password)
-        instance.save()
+        cls.save_data(instance)
         return True
 
     @classmethod
@@ -154,12 +156,12 @@ class UserService:
             return False
         try:
             instance.delete()
-            ESUserService.delete(str(pk))
+            ESUserService.delete.delay(str(pk))
 
         except Exception:
             instance.deleted_at = timezone.now()
-            instance.save()
-            ESUserService.update(user=instance, profile=instance.profile)
+            cls.save_data(instance)
+
         return True
 
     @classmethod
@@ -169,8 +171,8 @@ class UserService:
             return False
 
         instance.deleted_at = None
-        instance.save()
-        ESUserService.update(user=instance, profile=instance.profile)
+        cls.save_data(instance)
+
         return True
 
     @classmethod
@@ -180,8 +182,8 @@ class UserService:
             return False
 
         instance.banned_at = timezone.now()
-        instance.save()
-        ESUserService.update(user=instance, profile=instance.profile)
+        cls.save_data(instance)
+
         return True
 
     @classmethod
@@ -191,8 +193,8 @@ class UserService:
             return False
 
         instance.banned_at = None
-        instance.save()
-        ESUserService.update(user=instance, profile=instance.profile)
+        cls.save_data(instance)
+
         return True
 
     @classmethod
@@ -208,6 +210,13 @@ class UserService:
 
             instance.role = role
 
-        instance.save()
-        ESUserService.update(instance, instance.profile)
+        cls.save_data(instance)
+
         return True
+
+    @classmethod
+    def save_data(cls, instance: User):
+        instance.save()
+        serializer = SimpleUserSerializer(instance)
+        ESUserService.update.delay(serializer.data)
+        return instance

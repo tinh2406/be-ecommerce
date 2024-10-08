@@ -1,35 +1,38 @@
+from celery import shared_task
 from elasticsearch_dsl.query import Exists, Range, Term
 
 from items.document import CategoryDocument
-from items.models import Category
 
 
 class ESCategoryService:
 
-    @classmethod
-    def index(cls, category: Category):
+    @staticmethod
+    @shared_task
+    def index(category: dict):
         cate_doc = CategoryDocument(
-            meta={"id": str(category.id)},
-            id=category.id,
-            name=category.name,
-            parent_id=category.parent_id,
-            created_at=category.created_at,
+            meta={"id": category.get("id")},
+            id=category.get("id"),
+            name=category.get("name"),
+            parent_id=category.get("parent_id"),
+            created_at=category.get("created_at"),
         )
         return cate_doc.save()
 
-    @classmethod
-    def update(cls, category: Category):
-        cate_doc = CategoryDocument.get(id=str(category.id))
+    @staticmethod
+    @shared_task
+    def update(category: dict):
+        cate_doc = CategoryDocument.get(id=category.get("id"))
         cate_doc.update(
-            name=category.name,
-            parent_id=category.parent_id,
-            created_at=category.created_at,
-            deleted_at=category.deleted_at,
+            name=category.get("name"),
+            parent_id=category.get("parent_id"),
+            created_at=category.get("created_at"),
+            deleted_at=category.get("deleted_at"),
         )
         return cate_doc.save()
 
-    @classmethod
-    def delete(cls, pk):
+    @staticmethod
+    @shared_task
+    def delete(pk):
         cate_doc = CategoryDocument.get(id=str(pk))
         return cate_doc.delete()
 
