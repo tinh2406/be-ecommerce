@@ -1,3 +1,4 @@
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
@@ -30,3 +31,17 @@ class ItemViewSet(ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        Permission.check_admin_permission(request)
+
+        pk = kwargs.get("pk")
+        ItemService.delete(pk)
+        return Response(status=204)
+
+    @action(detail=True, methods=["post"])
+    def restore(self, request, pk=None):
+        Permission.check_admin_permission(request)
+
+        ItemService.restore(pk)
+        return Response(status=204)

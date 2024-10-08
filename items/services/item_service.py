@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework.exceptions import NotFound
 
 from items.models import Item
@@ -84,3 +85,25 @@ class ItemService:
         serializer = SimpleItemSerializer(instance)
         ESItemService.index.delay(serializer.data)
         return instance
+
+    @classmethod
+    def delete(cls, pk):
+        instance = cls.get(pk, use_cache=False)
+        try:
+            instance.delete()
+            ESItemService.delete.delay(pk)
+        except Exception:
+            instance.deleted_at = timezone.now()
+            instance.save()
+            serializer = SimpleItemSerializer(instance)
+            ESItemService.index.delay(serializer.data)
+        return True
+
+    @classmethod
+    def restore(cls, pk):
+        instance = cls.get(pk, allow_deleted=True)
+        instance.deleted_at = None
+        instance.save()
+        serializer = SimpleItemSerializer(instance)
+        ESItemService.index.delay(serializer.data)
+        return True
