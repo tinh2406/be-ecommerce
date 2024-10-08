@@ -21,11 +21,9 @@ class CategorySerializer(ModelSerializer):
     parent_id = CharField(max_length=255, required=False, allow_null=True)
 
     def validate(self, attrs):
-        if "parent_id" in attrs:
-            parent_id = attrs.get("parent_id")
-            if parent_id:
-                parent = CategoryService.get(parent_id)
-                attrs["parent"] = parent
+        parent_id = attrs.get("parent_id")
+        if parent_id:
+            CategoryService.get(parent_id, raise_exception=True)
         return attrs
 
     def to_representation(self, instance):

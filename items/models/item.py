@@ -20,9 +20,11 @@ class Item(BaseTimeModel):
     category = ForeignKey("items.Category", on_delete=PROTECT, related_name="items")
     price = FloatField()
     hot_price = FloatField(null=True)
-    image = CharField(max_length=255)
+    thumbnail = CharField(max_length=255)
 
     objects = Manager()
+    key = "item_"
+    cache_fields = ["id"]
 
     class Meta:
         db_table = "items"
