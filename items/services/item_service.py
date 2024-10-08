@@ -1,7 +1,7 @@
 from django.utils import timezone
 from rest_framework.exceptions import NotFound
 
-from items.models import Item
+from items.models import Item, UserLikeItem
 from items.serializers.simple_item_serializer import SimpleItemSerializer
 
 from .es_item_service import ESItemService
@@ -106,4 +106,15 @@ class ItemService:
         instance.save()
         serializer = SimpleItemSerializer(instance)
         ESItemService.index.delay(serializer.data)
+        return True
+
+    @classmethod
+    def like(cls, pk, user_id):
+        cls.get(pk)
+        UserLikeItem.objects.create(user_id=user_id, item_id=pk)
+        return True
+
+    @classmethod
+    def unlike(cls, pk, user_id):
+        UserLikeItem.objects.filter(user_id=user_id, item_id=pk).delete()
         return True

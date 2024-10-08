@@ -53,3 +53,15 @@ class ItemViewSet(ModelViewSet):
         query.is_valid(raise_exception=True)
         categories = ESItemService.search(query.data)
         return Response(categories)
+
+    @action(detail=True, methods=["post"])
+    def like(self, request, pk=None):
+        user = request.user
+        res = ItemService.like(pk, user_id=user.id)
+        return Response(res)
+
+    @action(detail=True, methods=["delete"])
+    def unlike(self, request, pk=None):
+        user = request.user
+        res = ItemService.unlike(pk, user_id=user.id)
+        return Response(res)
