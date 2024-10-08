@@ -2,6 +2,7 @@ from django.utils import timezone
 from rest_framework.exceptions import NotFound
 
 from products.models import Category
+from products.utils.simple_category_serializer import SimpleCategorySerializer
 
 from ..utils.simple_category_serializer import SimpleCategorySerializer
 from .es_category_service import ESCategoryService
@@ -57,8 +58,7 @@ class CategoryService:
         instance = cls.get(pk)
         instance.deleted_at = timezone.now()
         instance.save()
-        ESCategoryService.delete(pk)
-
+        ESCategoryService.delete.delay(str(pk))
         return True
 
     @classmethod
@@ -66,5 +66,5 @@ class CategoryService:
         instance = cls.get(pk, allow_deleted=True)
         instance.deleted_at = None
         instance.save()
-        ESCategoryService.restore(pk)
+        ESCategoryService.restore.delay(pk)
         return True

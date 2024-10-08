@@ -38,6 +38,7 @@ class ESCategoryService:
         return cate_doc.update(deleted_at=timezone.now())
 
     @classmethod
+    @shared_task
     def restore(cls, pk):
         cate_doc = CategoryDocument.get(id=str(pk))
         return cate_doc.update(deleted_at=None)

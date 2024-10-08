@@ -150,7 +150,7 @@ class UserService:
             return False
         instance.deleted_at = timezone.now()
         instance.save()
-        ESUserService.delete(str(pk))
+        ESUserService.delete.delay(str(pk))
 
         return True
 
@@ -162,7 +162,8 @@ class UserService:
 
         instance.deleted_at = None
         instance.save()
-        ESUserService.restore(str(pk))
+        ESUserService.restore.delay(str(pk))
+
         return True
 
     @classmethod
