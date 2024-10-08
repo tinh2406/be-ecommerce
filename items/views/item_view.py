@@ -20,3 +20,13 @@ class ItemViewSet(ModelViewSet):
         pk = kwargs.get("pk")
         instance = ItemService.get(pk)
         return Response(instance)
+
+    def update(self, request, *args, **kwargs):
+        Permission.check_admin_permission(request)
+
+        pk = kwargs.get("pk")
+        instance = ItemService.get(pk, use_cache=False)
+        serializer = ItemSerializer(instance, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)

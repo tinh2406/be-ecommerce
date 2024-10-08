@@ -58,3 +58,29 @@ class ItemService:
             if raise_exception:
                 raise NotFound("Item not found")
             return None
+
+    @classmethod
+    def update(cls, instance: Item, validated: dict, **kwargs) -> Item | None:
+
+        instance.name = validated.get("name")
+        instance.price = validated.get("price")
+        instance.thumbnail = validated.get("thumbnail")
+        instance.category_id = validated.get("category_id")
+        instance.description = validated.get("description")
+        instance.hot_price = validated.get("hot_price")
+
+        images = validated.get("images", None)
+        attributes = validated.get("attributes", None)
+        variants = validated.get("variants", None)
+
+        if images:
+            ItemImageService.delete_multiple(instance.id)
+            ItemImageService.create_multiple(images, instance.id)
+        if attributes and variants:
+            ItemAttributeService.delete_multiple(instance.id)
+            ItemAttributeService.create_multiple(attributes, variants, instance.id)
+
+        instance.save()
+        serializer = SimpleItemSerializer(instance)
+        ESItemService.index.delay(serializer.data)
+        return instance

@@ -16,3 +16,7 @@ class ItemImageService:
             ItemImage.objects.create(url=image, item_id=item_id) for image in images
         ]
         return item_images
+
+    @classmethod
+    def delete_multiple(cls, item_id):
+        ItemImage.objects.filter(item_id=item_id).delete()
