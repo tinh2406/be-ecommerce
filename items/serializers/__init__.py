@@ -1,2 +1,4 @@
+from .attribute_serializer import AttributeSerializer as AttributeSerializer
 from .category_serializer import CategorySerializer as CategorySerializer
 from .category_serializer import QueryCategorySerializer as QueryCategorySerializer
+from .item_serializer import ItemSerializer as ItemSerializer
