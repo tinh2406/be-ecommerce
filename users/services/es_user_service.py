@@ -44,6 +44,7 @@ class ESUserService:
         user_doc.update(deleted_at=timezone.now())
 
     @classmethod
+    @shared_task
     def restore(cls, pk):
         user_doc = UserDocument.get(id=pk)
         user_doc.update(deleted_at=None)
