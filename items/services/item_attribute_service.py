@@ -74,3 +74,8 @@ class ItemAttributeService:
             )
 
         return {"attributes": created_attributes, "variants": created_variants}
+
+    @classmethod
+    def delete_multiple(cls, item_id):
+        ItemAttribute.objects.filter(item_id=item_id).delete()
+        ItemVariant.objects.filter(item_id=item_id).delete()

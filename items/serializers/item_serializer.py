@@ -71,7 +71,9 @@ class ItemSerializer(ModelSerializer):
                         )
                     variant_key += f"{variant_value}|"  # Tạo key cho variant
 
-                variant_dict[variant_key] = variant  # Ví dụ key: "S|red|", "M|red|", "S|blue|", "M|blue|"
+                variant_dict[variant_key] = (
+                    variant  # Ví dụ key: "S|red|", "M|red|", "S|blue|", "M|blue|"
+                )
 
                 # Kiểm tra các thuộc tính cần thiết
                 if "price" not in variant:
@@ -93,4 +95,8 @@ class ItemSerializer(ModelSerializer):
 
     def create(self, validated_data):
         item = ItemService.create(validated_data)
+        return item
+
+    def update(self, instance, validated_data):
+        item = ItemService.update(instance, validated_data)
         return item
