@@ -1,4 +1,4 @@
-from elasticsearch_dsl import Date, Document, Text
+from elasticsearch_dsl import Date, Document, Keyword, Text
 
 
 class ItemDocument(Document):
@@ -6,13 +6,13 @@ class ItemDocument(Document):
     class Index:
         name = "items"
 
-    id = Text()
+    id = Keyword()
     name = Text()
-    describe = Text()
-    price = Text()
+    description = Text()
+    price = Keyword()
     thumbnail = Text()
-    hot_price = Text()
+    hot_price = Keyword()
 
-    category_id = Text()
+    category_id = Keyword()
     created_at = Date()
     deleted_at = Date()

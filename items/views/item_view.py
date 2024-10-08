@@ -4,7 +4,9 @@ from rest_framework.viewsets import ModelViewSet
 
 from core.permission import Permission
 from items.serializers import ItemSerializer
+from items.serializers.item_serializer import QueryItemSerializer
 from items.services import ItemService
+from items.services.es_item_service import ESItemService
 
 
 class ItemViewSet(ModelViewSet):
@@ -45,3 +47,9 @@ class ItemViewSet(ModelViewSet):
 
         ItemService.restore(pk)
         return Response(status=204)
+
+    def list(self, request, *args, **kwargs):
+        query = QueryItemSerializer(data=request.query_params)
+        query.is_valid(raise_exception=True)
+        categories = ESItemService.search(query.data)
+        return Response(categories)

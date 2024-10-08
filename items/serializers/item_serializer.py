@@ -1,14 +1,19 @@
 from rest_framework.serializers import (
+    BooleanField,
     CharField,
+    ChoiceField,
+    DateTimeField,
     DictField,
     ListField,
     ModelSerializer,
     ValidationError,
 )
 
+from core.utils import BaseQuerySerializer
 from items.models import Item
 from items.services import CategoryService, ItemService
 
+from ..constants import ItemOrderChoice
 from ..utils.representation_item import representation_item
 from .attribute_serializer import AttributeSerializer
 
@@ -100,3 +105,18 @@ class ItemSerializer(ModelSerializer):
     def update(self, instance, validated_data):
         item = ItemService.update(instance, validated_data)
         return item
+
+
+class QueryItemSerializer(BaseQuerySerializer):
+    category_id = CharField(allow_blank=True, allow_null=True, required=False)
+
+    is_deleted = BooleanField(allow_null=True, required=False)
+    delete_from = DateTimeField(allow_null=True, required=False)
+    delete_to = DateTimeField(allow_null=True, required=False)
+    created_from = DateTimeField(allow_null=True, required=False)
+    created_to = DateTimeField(allow_null=True, required=False)
+    price_from = CharField(allow_null=True, required=False)
+    price_to = CharField(allow_null=True, required=False)
+
+    # override
+    order_by = ChoiceField(allow_null=True, required=False, choices=ItemOrderChoice)
