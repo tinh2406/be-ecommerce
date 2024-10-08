@@ -20,3 +20,9 @@ class ESItemService:
             created_at=item.get("created_at"),
         )
         return item_doc.save()
+
+    @staticmethod
+    @shared_task
+    def delete(pk):
+        cate_doc = ItemDocument.get(id=str(pk))
+        return cate_doc.delete()
