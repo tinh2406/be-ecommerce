@@ -28,7 +28,7 @@ class User(AbstractBaseUser, PermissionsMixin, BaseTimeModel):
 
     USERNAME_FIELD = "email"
     key: str = "user_"
-    cache_fields = ["id", "email"]
+    cache_key_fields = ["id", "email"]
 
     objects = UserManager()
 

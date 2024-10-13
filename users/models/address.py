@@ -20,7 +20,7 @@ class Address(BaseCacheModel):
     objects = AddressManager()
 
     key: str = "address_"
-    cache_fields = ["id"]
+    cache_key_fields = ["id"]
     cache_time = 7 * 24 * 60 * 60
 
     class Meta:

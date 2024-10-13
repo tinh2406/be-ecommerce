@@ -9,7 +9,7 @@ class BaseCacheModel(models.Model):
     objects = Manager
 
     key: str = ""
-    cache_fields: list[str] = []
+    cache_key_fields: list[str] = []
     cache_time = 60
 
     def save(
@@ -21,13 +21,13 @@ class BaseCacheModel(models.Model):
         update_fields=None,
     ):
         assert self.key is not None, "Key is required"
-        for field in self.cache_fields:
+        for field in self.cache_key_fields:
             cache.delete(f"{self.key}{getattr(self, field)}")
         return super().save(*args, force_insert, force_update, using, update_fields)
 
     def delete(self, using=None, keep_parents=False):
         assert self.key is not None, "Key is required"
-        for field in self.cache_fields:
+        for field in self.cache_key_fields:
             cache.delete(f"{self.key}{getattr(self, field)}")
         return super().delete(using, keep_parents)
 
@@ -45,7 +45,7 @@ class BaseCacheModel(models.Model):
             obj = cls.objects.get(**{key: value})
             pickled_object = pickle.dumps(obj)
 
-        for field in cls.cache_fields:
+        for field in cls.cache_key_fields:
             att_value = str(getattr(obj, field))
 
             cache.set(f"{cls.key}{att_value}", pickled_object, timeout=cls.cache_time)

@@ -36,20 +36,17 @@ services:
       - ./data/redis-data:/data
     restart: unless-stopped
 
-  activemq:
-    image: rmohr/activemq:latest
-    container_name: e-activemq
+  rabbitmq:
+    image: rabbitmq:3-management  # Sử dụng phiên bản RabbitMQ với giao diện quản lý
+    container_name: e-rabbitmq
     ports:
-      - "${ACTIVEMQ_WEB_CONSOLE_PORT}:8161"  # Web console
-      - "${ACTIVEMQ_OPENWIRE_PORT}:61616"  # OpenWire (JMS) protocol
-      - "${ACTIVEMQ_STOMP_PORT}:61613"  # STOMP protocol
-      - "${ACTIVEMQ_MQTT_PORT}:1883"  # MQTT protocol
-      - "${ACTIVEMQ_AMQP_PORT}:5672"  # AMQP protocol
+      - "${RABBITMQ_WEB_CONSOLE_PORT}:15672"  # Web Management Console
+      - "${RABBITMQ_AMQP_PORT}:5672"  # AMQP protocol (RabbitMQ)
     environment:
-      - ACTIVEMQ_ADMIN_LOGIN=${ACTIVEMQ_ADMIN_LOGIN}
-      - ACTIVEMQ_ADMIN_PASSWORD=${ACTIVEMQ_ADMIN_PASSWORD}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
     volumes:
-      - ./data/activemq_data:/var/activemq/data
+      - ./data/rabbitmq_data:/var/lib/rabbitmq
     restart: unless-stopped
 
 networks:

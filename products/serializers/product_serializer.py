@@ -1,0 +1,147 @@
+from rest_framework.serializers import (
+    BooleanField,
+    CharField,
+    ChoiceField,
+    DateTimeField,
+    DictField,
+    ListField,
+    ModelSerializer,
+    ValidationError,
+)
+
+from core.utils import BaseQuerySerializer
+from products.models import Product
+from products.services import CategoryService, ProductService
+
+from ..constants import ProductOrderChoice
+from .attribute_serializer import AttributeSerializer
+
+
+class ProductSerializer(ModelSerializer):
+    class Meta:
+        model = Product
+        fields = "__all__"
+        read_only_fields = ("id", "created_at", "updated_at", "deleted_at", "category")
+
+    category_id = CharField(max_length=255)
+    images = ListField(child=CharField(max_length=255), required=False)
+    attributes = AttributeSerializer(many=True, required=False)
+    variants = ListField(child=DictField(), required=False)
+
+    def validate(self, attrs):
+        CategoryService.get(attrs.get("category_id"), raise_exception=True)
+
+        # Kiểm tra xem có attributes không
+        if "attributes" in attrs:
+            # Nếu có attributes thì phải có variants
+            if "variants" not in attrs:
+                raise ValidationError({"variants": "This field is required"})
+
+            # Lấy danh sách tên của các thuộc tính
+            attribute_names = [attribute["name"] for attribute in attrs["attributes"]]
+
+            # Lấy dictionary value của các thuộc tính
+            attribute_values = {
+                attribute["name"]: set(attribute["values"])
+                for attribute in attrs["attributes"]
+            }
+
+            # Tính số lượng variants cần có
+            total_variants = 1
+            for attribute in attrs["attributes"]:
+                total_variants *= len(attribute["values"])
+
+            # Kiểm tra xem số lượng variants đã nhập vào có đủ không
+            variant_dict = {}
+            for variant in attrs["variants"]:
+                variant_key = ""
+                for attribute_name in attribute_names:
+                    if attribute_name not in variant:
+                        raise ValidationError(
+                            {attribute_name: "This field is required"}
+                        )
+
+                    variant_value = variant[attribute_name]
+                    if variant_value not in attribute_values[attribute_name]:
+                        raise ValidationError(
+                            {attribute_name: "This value is not valid"}
+                        )
+                    variant_key += f"{variant_value}|"  # Tạo key cho variant
+
+                variant_dict[variant_key] = variant  # Dùng variant làm giá trị cho dict
+
+                # Kiểm tra các thuộc tính cần thiết
+                if "price" not in variant:
+                    raise ValidationError({"price": "This field is required"})
+                if "image" not in variant:
+                    raise ValidationError({"image": "This field is required"})
+
+            # Kiểm tra xem số lượng variants đã nhập vào có đủ không
+            if len(variant_dict) != total_variants:
+                raise ValidationError(
+                    {"variants": "The number of variants is not enough"}
+                )
+            attrs["variants"] = list(variant_dict.values())
+
+        return attrs
+
+    def to_representation(self, instance: Product):
+        data = dict()
+        data["id"] = instance.id
+        data["name"] = instance.name
+        data["description"] = instance.description
+        data["price"] = instance.price
+        data["hot_price"] = instance.hot_price
+        data["thumbnail"] = instance.thumbnail
+        data["created_at"] = instance.created_at
+        data["updated_at"] = instance.updated_at
+        data["deleted_at"] = instance.deleted_at
+        data["category_id"] = instance.category_id
+        data["category"] = instance.category.name
+
+        images = [image.url for image in instance.images.all()]
+        for variant in instance.variants.all():
+            images.append(variant.image)
+        data["images"] = images
+
+        data["attributes"] = {
+            attribute.name: [value.value for value in attribute.values.all()]
+            for attribute in instance.attributes.all()
+        }
+        data["variants"] = [
+            {
+                "price": variant.price,
+                "hot_price": variant.hot_price,
+                "image": variant.image,
+                "attributes": {
+                    attribute.product_attribute_value.attribute.name: attribute.product_attribute_value.value
+                    for attribute in variant.attributes.all()
+                },
+            }
+            for variant in instance.variants.all()
+        ]
+
+        return data
+
+    def create(self, validated_data):
+        product = ProductService.create(validated_data)
+        return product
+
+    def update(self, instance, validated_data):
+        product = ProductService.update(instance, validated_data)
+        return product
+
+
+class QueryProductSerializer(BaseQuerySerializer):
+    category_id = CharField(allow_blank=True, allow_null=True, required=False)
+
+    is_deleted = BooleanField(allow_null=True, required=False)
+    delete_from = DateTimeField(allow_null=True, required=False)
+    delete_to = DateTimeField(allow_null=True, required=False)
+    created_from = DateTimeField(allow_null=True, required=False)
+    created_to = DateTimeField(allow_null=True, required=False)
+    price_from = CharField(allow_null=True, required=False)
+    price_to = CharField(allow_null=True, required=False)
+
+    # override
+    order_by = ChoiceField(allow_null=True, required=False, choices=ProductOrderChoice)

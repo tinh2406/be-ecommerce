@@ -21,25 +21,24 @@ CACHES = {
     }
 }
 
+RABBITMQ_AMQP_PORT = env("RABBITMQ_AMQP_PORT", default=5672)
+RABBITMQ_DEFAULT_USER = env("RABBITMQ_DEFAULT_USER", default="guest")
+RABBITMQ_DEFAULT_PASS = env("RABBITMQ_DEFAULT_PASS", default="guest")
+
 # Celery
-CELERY_BROKER_URL = (
-    "redis://localhost:6379/0"  # Hoặc 'amqp://localhost' nếu sử dụng RabbitMQ
-)
+CELERY_BROKER_URL = f"amqp://{RABBITMQ_DEFAULT_USER}:{RABBITMQ_DEFAULT_PASS}@localhost:{RABBITMQ_AMQP_PORT}//"
+
+# Định dạng và giao thức serialization
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
-CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
 CELERY_RESULT_SERIALIZER = "json"
 
+# Lưu kết quả vào RabbitMQ (sử dụng RPC):
+CELERY_RESULT_BACKEND = "rpc://"
+
+# Tự động kết nối lại nếu kết nối với broker bị mất khi khởi động
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
-# ActiveMQ
-ACTIVEMQ_ADMIN_LOGIN = env("ACTIVEMQ_ADMIN_LOGIN")
-ACTIVEMQ_ADMIN_PASSWORD = env("ACTIVEMQ_ADMIN_PASSWORD")
-ACTIVEMQ_WEB_CONSOLE_PORT = env("ACTIVEMQ_WEB_CONSOLE_PORT", default=8161)
-ACTIVEMQ_OPENWIRE_PORT = env("ACTIVEMQ_OPENWIRE_PORT", default=61616)
-ACTIVEMQ_STOMP_PORT = env("ACTIVEMQ_STOMP_PORT", default=61613)
-ACTIVEMQ_MQTT_PORT = env("ACTIVEMQ_MQTT_PORT", default=1883)
-ACTIVEMQ_AMQP_PORT = env("ACTIVEMQ_AMQP_PORT", default=5672)
 
 # ElasticSearch
 ELASTICSEARCH_HOST = env("ELASTICSEARCH_HOST", default="localhost")
@@ -78,7 +77,7 @@ THIRD_PARTY_APPS = (
     "bandit",
     "django_nose",
 )
-LOCAL_APPS = ("users", "items")
+LOCAL_APPS = ("users", "products")
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 AUTH_USER_MODEL = "users.User"

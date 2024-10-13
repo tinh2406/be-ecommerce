@@ -6,5 +6,5 @@ from django.urls import include, path
 urlpatterns = [
     path("", lambda request: HttpResponse("Hello World")),
     path("api/v1/", include("users.urls")),
-    path("api/v1/", include("items.urls")),
+    path("api/v1/", include("products.urls")),
 ] + static(settings.STATIC_URL)
