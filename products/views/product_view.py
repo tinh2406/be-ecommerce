@@ -1,3 +1,4 @@
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -43,14 +44,14 @@ class ProductViewSet(ModelViewSet):
 
         pk = kwargs.get("pk")
         ProductService.delete(pk)
-        return Response(status=204)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=["post"])
     def restore(self, request, pk=None):
         Permission.check_admin_permission(request)
 
         ProductService.restore(pk)
-        return Response(status=204)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     def list(self, request, *args, **kwargs):
         query = QueryProductSerializer(data=request.query_params)

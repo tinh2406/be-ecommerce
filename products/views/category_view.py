@@ -1,3 +1,4 @@
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -40,14 +41,14 @@ class CategoryViewSet(ModelViewSet):
 
         pk = kwargs.get("pk")
         CategoryService.delete(pk)
-        return Response(status=204)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=["post"])
     def restore(self, request, pk=None):
         Permission.check_admin_permission(request)
 
         CategoryService.restore(pk)
-        return Response(status=204)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     def list(self, request, *args, **kwargs):
         query = QueryCategorySerializer(data=request.query_params)
