@@ -3,7 +3,6 @@ import uuid
 from django.db.models import CASCADE, CharField, ForeignKey, UUIDField
 
 from core.models import BaseCacheModel
-from users.managers import AddressManager
 
 
 class Address(BaseCacheModel):
@@ -16,8 +15,6 @@ class Address(BaseCacheModel):
     ward = CharField(max_length=5)
 
     detail = CharField(max_length=255)
-
-    objects = AddressManager()
 
     key: str = "address_"
     cache_key_fields = ["id"]

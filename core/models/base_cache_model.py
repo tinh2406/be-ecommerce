@@ -1,14 +1,13 @@
-import pickle
-
 from django.core.cache import cache
 from django.db import models
-from django.db.models import Manager
+
+from core.managers import BaseCacheManager
 
 
 class BaseCacheModel(models.Model):
-    objects = Manager
+    objects = BaseCacheManager()
 
-    key: str = ""
+    key = ""
     cache_key_fields: list[str] = []
     cache_time = 60
 
@@ -30,26 +29,6 @@ class BaseCacheModel(models.Model):
         for field in self.cache_key_fields:
             cache.delete(f"{self.key}{getattr(self, field)}")
         return super().delete(using, keep_parents)
-
-    @classmethod
-    def cache_load(cls, **kwargs):
-        assert cls.key is not None, "Key is required"
-        key, value = kwargs.popitem()
-        if key == "pk":
-            key = "id"
-
-        pickled_object = cache.get(f"{cls.key}{value}")
-        if pickled_object:
-            obj = pickle.loads(pickled_object)
-        else:
-            obj = cls.objects.get(**{key: value})
-            pickled_object = pickle.dumps(obj)
-
-        for field in cls.cache_key_fields:
-            att_value = str(getattr(obj, field))
-
-            cache.set(f"{cls.key}{att_value}", pickled_object, timeout=cls.cache_time)
-        return obj
 
     class Meta:
         abstract = True

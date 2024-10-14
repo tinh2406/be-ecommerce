@@ -1,6 +1,6 @@
 from uuid import uuid4
 
-from django.db.models import PROTECT, CharField, ForeignKey, Manager, UUIDField
+from django.db.models import PROTECT, CharField, ForeignKey, UUIDField
 
 from core.models import BaseTimeModel
 
@@ -16,8 +16,6 @@ class Category(BaseTimeModel):
 
     cache_key_fields = ["id"]
     key: str = "category_"
-
-    objects = Manager()
 
     class Meta:
         db_table = "categories"
