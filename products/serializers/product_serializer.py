@@ -41,7 +41,7 @@ class ProductSerializer(ModelSerializer):
                 raise ValidationError({"variants": "This field is required"})
 
             # Lấy danh sách tên của các thuộc tính và giá trị của chúng
-            attribute_values, attribute_names = self.attribute_processor(attributes)
+            attribute_values, attribute_names = self.process_attributes(attributes)
 
             # Tính tổng số variants cần có
             total_variants = 1
@@ -49,7 +49,7 @@ class ProductSerializer(ModelSerializer):
                 total_variants *= len(values)
 
             # Xử lý variants
-            variants = self.variant_processor(
+            variants = self.process_variants(
                 variants, attribute_names, attribute_values
             )
 
@@ -109,11 +109,13 @@ class ProductSerializer(ModelSerializer):
         return product
 
     @staticmethod
-    def attribute_processor(attributes):
+    def process_attributes(attributes):
         """ "
-        [{"name": "color","values": ["red","yellow"]},]
-        => {"color": {"red", "yellow"}}, ["color",]
+        Process attributes to extract names and values.
+        Input: [{"name": "color", "values": ["red", "yellow"]}]
+        Output: {"color": {"red", "yellow"}}, ["color",]
         """
+
         # Lấy danh sách tên của các thuộc tính và giá trị của chúng
         attribute_values = {
             attribute["name"]: set(attribute["values"]) for attribute in attributes
@@ -124,7 +126,8 @@ class ProductSerializer(ModelSerializer):
         return attribute_values, attribute_names
 
     @staticmethod
-    def variant_processor(variants, attribute_names, attribute_values):
+    def process_variants(variants, attribute_names, attribute_values):
+        """Validate and process variants based on attribute names and values"""
         """Loại bỏ các giá trị không hợp lệ và kiểm tra các thuộc tính cần thiết"""
         variant_dict = {}
         for variant in variants:
