@@ -13,11 +13,11 @@ class ProductImageService:
     @classmethod
     def create_multiple(cls, images, product_id, **kwargs) -> List[ProductImage]:
         product_images = [
-            ProductImage.objects.create(url=image, product_id=product_id)
-            for image in images
+            ProductImage(url=image, product_id=product_id) for image in images
         ]
+        ProductImage.objects.bulk_create(product_images)
         return product_images
 
     @classmethod
     def delete_multiple(cls, product_id):
-        ProductImage.objects.filter(product_id=product_id).delete()
+        ProductImage.objects.filter(product_id=product_id).only("id").delete()

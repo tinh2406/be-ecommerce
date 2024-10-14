@@ -47,10 +47,10 @@ class ESProductService:
         price_to = query_params.get("price_to")
         delete_from = query_params.get("delete_from")
         delete_to = query_params.get("delete_to")
-        order_by = query_params.get("order_by", "_score")
-        order_type = query_params.get("order_type", "desc")
-        page_size = query_params.get("page_size", 10)
-        page = query_params.get("page", 1)
+        order_by = query_params.get("order_by") or "_score"
+        order_type = query_params.get("order_type") or "desc"
+        page_size = query_params.get("page_size") or 10
+        page = query_params.get("page") or 1
         skip = (page - 1) * page_size  # Tính toán skip từ page và page_size
 
         # Xử lý trường hợp is_deleted
