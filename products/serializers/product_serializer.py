@@ -109,7 +109,7 @@ class ProductSerializer(ModelSerializer):
         return product
 
     @staticmethod
-    def process_attributes(attributes):
+    def extract_names_values_from_attributes(attributes):
         """ "
         Process attributes to extract names and values.
         Input: [{"name": "color", "values": ["red", "yellow"]}]
@@ -126,7 +126,7 @@ class ProductSerializer(ModelSerializer):
         return attribute_values, attribute_names
 
     @staticmethod
-    def process_variants(variants, attribute_names, attribute_values):
+    def validate_variant(variants, attribute_names, attribute_values):
         """Validate and process variants based on attribute names and values"""
         """Loại bỏ các giá trị không hợp lệ và kiểm tra các thuộc tính cần thiết"""
         variant_dict = {}
