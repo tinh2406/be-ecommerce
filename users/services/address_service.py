@@ -100,7 +100,7 @@ class AddressService:
         cls, address_id, user_id=None, raise_exception=True, **kwargs
     ) -> Address | None:
         try:
-            address = Address.cache_load(id=address_id)
+            address = Address.objects.get(id=address_id)
             if user_id and address.user_id != user_id:
                 raise NotFound("Address is not found")
             return address

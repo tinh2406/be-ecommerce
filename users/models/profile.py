@@ -9,7 +9,6 @@ from django.db.models import (
 )
 
 from users.constants import Genders
-from users.managers import ProfileManager
 
 
 class Profile(Model):
@@ -29,8 +28,6 @@ class Profile(Model):
     )
     image = CharField(max_length=255, null=True, blank=True)
     gender = IntegerField(null=True, blank=True)
-
-    objects = ProfileManager()
 
     class Meta:
         db_table = "profiles"

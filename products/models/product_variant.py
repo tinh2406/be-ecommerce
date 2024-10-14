@@ -5,7 +5,6 @@ from django.db.models import (
     CharField,
     DecimalField,
     ForeignKey,
-    Manager,
     Model,
     UUIDField,
 )
@@ -17,8 +16,6 @@ class ProductVariant(Model):
     hot_price = DecimalField(max_digits=10, decimal_places=2, null=True)
     image = CharField(max_length=255, null=True)
     product = ForeignKey("products.Product", on_delete=CASCADE, related_name="variants")
-
-    objects = Manager()
 
     class Meta:
         db_table = "product_variants"

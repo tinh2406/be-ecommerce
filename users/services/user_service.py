@@ -34,15 +34,10 @@ class UserService:
         raise_exception=True,
         allow_deleted=False,
         allow_banned=False,
-        use_cache=True,
         **kwargs,
     ) -> User | None:
         try:
-            user = (
-                User.cache_load(email=email)
-                if use_cache
-                else User.objects.get(email=email)
-            )
+            user = User.objects.get(email=email, related_fields="profile")
 
             if not allow_deleted and user.deleted_at:
                 raise NotFound("User not found")
@@ -61,11 +56,10 @@ class UserService:
         raise_exception=True,
         allow_deleted=False,
         allow_banned=False,
-        use_cache=True,
         **kwargs,
     ) -> User | None:
         try:
-            user = User.cache_load(pk=pk) if use_cache else User.objects.get(pk=pk)
+            user = User.objects.get(id=pk, related_fields="profile")
             if not allow_deleted and user.deleted_at:
                 raise NotFound("User not found")
             if not allow_banned and user.banned_at:

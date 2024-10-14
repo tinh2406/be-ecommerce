@@ -21,13 +21,9 @@ class CategoryService:
         return category
 
     @classmethod
-    def get(
-        cls, pk, raise_exception=True, allow_deleted=False, use_cache=True
-    ) -> Category | None:
+    def get(cls, pk, raise_exception=True, allow_deleted=False) -> Category | None:
         try:
-            category = (
-                Category.cache_load(id=pk) if use_cache else Category.objects.get(pk=pk)
-            )
+            category = Category.objects.get(id=pk)
 
             if not allow_deleted and category.deleted_at:
                 raise NotFound("Category not found")

@@ -5,7 +5,6 @@ from django.db.models import (
     CharField,
     FloatField,
     ForeignKey,
-    Manager,
     TextField,
     UUIDField,
 )
@@ -24,9 +23,9 @@ class Product(BaseTimeModel):
     hot_price = FloatField(null=True)
     thumbnail = CharField(max_length=255)
 
-    objects = Manager()
     cache_key_fields = ["id"]
     cache_time = 300
+    key = "product_"
 
     class Meta:
         db_table = "products"

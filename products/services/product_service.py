@@ -44,11 +44,17 @@ class ProductService:
 
     @classmethod
     def get(
-        cls, pk, raise_exception=True, allow_deleted=False, use_cache=True, **kwargs
+        cls, pk, raise_exception=True, allow_deleted=False, **kwargs
     ) -> Product | None:
         try:
-            product = (
-                Product.cache_load(id=pk) if use_cache else Product.objects.get(pk=pk)
+            product = Product.objects.get(
+                id=pk,
+                related_fields=[
+                    "images",
+                    "category",
+                    "attributes__values",
+                    "variants__attributes__product_attribute_value__attribute",
+                ],
             )
             if not allow_deleted and product.deleted_at:
                 raise NotFound("Product not found")
