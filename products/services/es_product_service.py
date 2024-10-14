@@ -1,5 +1,5 @@
 from celery import shared_task
-from elasticsearch.exceptions import NotFoundError
+from django.utils import timezone
 from elasticsearch_dsl.query import Bool, Exists, MultiMatch, Range, Term
 
 from products.document import ProductDocument
@@ -26,12 +26,14 @@ class ESProductService:
     @staticmethod
     @shared_task
     def delete(pk):
-        try:
-            product_doc = ProductDocument.get(id=str(pk))
-            return product_doc.delete()
-        except NotFoundError:
-            # Xử lý trường hợp không tìm thấy tài liệu để xóa
-            return {"error": "Document not found"}
+        product_doc = ProductDocument.get(id=str(pk))
+        product_doc.update(deleted_at=timezone.now())
+
+    @staticmethod
+    @shared_task
+    def restore(pk):
+        product_doc = ProductDocument.get(id=str(pk))
+        product_doc.update(deleted_at=None)
 
     @classmethod
     def search(cls, query_params: dict, paginate=True, **kwargs):

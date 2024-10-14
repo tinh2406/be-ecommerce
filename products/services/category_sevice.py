@@ -55,14 +55,10 @@ class CategoryService:
     @classmethod
     def delete(cls, pk):
         instance = cls.get(pk)
-        try:
-            instance.delete()
-            ESCategoryService.delete.delay(pk)
-        except Exception:
-            instance.deleted_at = timezone.now()
-            instance.save()
-            serializer = SimpleCategorySerializer(instance)
-            ESCategoryService.index.delay(serializer.data)
+        instance.deleted_at = timezone.now()
+        instance.save()
+        ESCategoryService.delete(pk)
+
         return True
 
     @classmethod
@@ -70,6 +66,5 @@ class CategoryService:
         instance = cls.get(pk, allow_deleted=True)
         instance.deleted_at = None
         instance.save()
-        serializer = SimpleCategorySerializer(instance)
-        ESCategoryService.index.delay(serializer.data)
+        ESCategoryService.restore(pk)
         return True

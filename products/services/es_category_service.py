@@ -1,4 +1,5 @@
 from celery import shared_task
+from django.utils import timezone
 from elasticsearch_dsl.query import Exists, Range, Term
 
 from products.document import CategoryDocument
@@ -34,7 +35,12 @@ class ESCategoryService:
     @shared_task
     def delete(pk):
         cate_doc = CategoryDocument.get(id=str(pk))
-        return cate_doc.delete()
+        return cate_doc.update(deleted_at=timezone.now())
+
+    @classmethod
+    def restore(cls, pk):
+        cate_doc = CategoryDocument.get(id=str(pk))
+        return cate_doc.update(deleted_at=None)
 
     @classmethod
     def search(cls, query_params: dict, paginate=True, **kwargs):
