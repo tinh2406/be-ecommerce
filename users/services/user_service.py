@@ -145,16 +145,12 @@ class UserService:
 
     @classmethod
     def delete(cls, pk, **kwargs) -> bool:
-        instance = cls.get(pk, allow_banned=True)
+        instance = cls.get(pk, allow_banned=True, raise_exception=True)
         if not instance:
             return False
-        try:
-            instance.delete()
-            ESUserService.delete.delay(str(pk))
-
-        except Exception:
-            instance.deleted_at = timezone.now()
-            cls.save_data(instance)
+        instance.deleted_at = timezone.now()
+        instance.save()
+        ESUserService.delete(str(pk))
 
         return True
 
@@ -165,8 +161,8 @@ class UserService:
             return False
 
         instance.deleted_at = None
-        cls.save_data(instance)
-
+        instance.save()
+        ESUserService.restore(str(pk))
         return True
 
     @classmethod

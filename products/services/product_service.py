@@ -93,14 +93,11 @@ class ProductService:
     @classmethod
     def delete(cls, pk):
         instance = cls.get(pk, use_cache=False)
-        try:
-            instance.delete()
-            ESProductService.delete.delay(pk)
-        except Exception:
-            instance.deleted_at = timezone.now()
-            instance.save()
-            serializer = SimpleProductSerializer(instance)
-            ESProductService.index.delay(serializer.data)
+
+        instance.deleted_at = timezone.now()
+        instance.save()
+
+        ESProductService.delete.delay(str(pk))
         return True
 
     @classmethod
@@ -108,8 +105,7 @@ class ProductService:
         instance = cls.get(pk, allow_deleted=True)
         instance.deleted_at = None
         instance.save()
-        serializer = SimpleProductSerializer(instance)
-        ESProductService.index.delay(serializer.data)
+        ESProductService.restore.delay(str(pk))
         return True
 
     @classmethod
