@@ -31,57 +31,34 @@ class ProductSerializer(ModelSerializer):
     def validate(self, attrs):
         CategoryService.get(attrs.get("category_id"), raise_exception=True)
 
+        attributes = attrs.get("attributes")
+        variants = attrs.get("variants")
+
         # Kiểm tra xem có attributes không
-        if "attributes" in attrs:
+        if attributes:
             # Nếu có attributes thì phải có variants
-            if "variants" not in attrs:
+            if not variants:
                 raise ValidationError({"variants": "This field is required"})
 
-            # Lấy danh sách tên của các thuộc tính
-            attribute_names = [attribute["name"] for attribute in attrs["attributes"]]
+            # Lấy danh sách tên của các thuộc tính và giá trị của chúng
+            attribute_values, attribute_names = self.attribute_processor(attributes)
 
-            # Lấy dictionary value của các thuộc tính
-            attribute_values = {
-                attribute["name"]: set(attribute["values"])
-                for attribute in attrs["attributes"]
-            }
-
-            # Tính số lượng variants cần có
+            # Tính tổng số variants cần có
             total_variants = 1
-            for attribute in attrs["attributes"]:
-                total_variants *= len(attribute["values"])
+            for values in attribute_values.values():
+                total_variants *= len(values)
+
+            # Xử lý variants
+            variants = self.variant_processor(
+                variants, attribute_names, attribute_values
+            )
 
             # Kiểm tra xem số lượng variants đã nhập vào có đủ không
-            variant_dict = {}
-            for variant in attrs["variants"]:
-                variant_key = ""
-                for attribute_name in attribute_names:
-                    if attribute_name not in variant:
-                        raise ValidationError(
-                            {attribute_name: "This field is required"}
-                        )
-
-                    variant_value = variant[attribute_name]
-                    if variant_value not in attribute_values[attribute_name]:
-                        raise ValidationError(
-                            {attribute_name: "This value is not valid"}
-                        )
-                    variant_key += f"{variant_value}|"  # Tạo key cho variant
-
-                variant_dict[variant_key] = variant  # Dùng variant làm giá trị cho dict
-
-                # Kiểm tra các thuộc tính cần thiết
-                if "price" not in variant:
-                    raise ValidationError({"price": "This field is required"})
-                if "image" not in variant:
-                    raise ValidationError({"image": "This field is required"})
-
-            # Kiểm tra xem số lượng variants đã nhập vào có đủ không
-            if len(variant_dict) != total_variants:
+            if len(variants) != total_variants:
                 raise ValidationError(
                     {"variants": "The number of variants is not enough"}
                 )
-            attrs["variants"] = list(variant_dict.values())
+            attrs["variants"] = variants
 
         return attrs
 
@@ -130,6 +107,47 @@ class ProductSerializer(ModelSerializer):
     def update(self, instance, validated_data):
         product = ProductService.update(instance, validated_data)
         return product
+
+    @staticmethod
+    def attribute_processor(attributes):
+        """ "
+        [{"name": "color","values": ["red","yellow"]},]
+        => {"color": {"red", "yellow"}}, ["color",]
+        """
+        # Lấy danh sách tên của các thuộc tính và giá trị của chúng
+        attribute_values = {
+            attribute["name"]: set(attribute["values"]) for attribute in attributes
+        }
+        # Lấy danh sách tên của các thuộc tính
+        attribute_names = list(attribute_values.keys())
+
+        return attribute_values, attribute_names
+
+    @staticmethod
+    def variant_processor(variants, attribute_names, attribute_values):
+        """Loại bỏ các giá trị không hợp lệ và kiểm tra các thuộc tính cần thiết"""
+        variant_dict = {}
+        for variant in variants:
+            variant_key = []
+            for attribute_name in attribute_names:
+                variant_value = variant.get(attribute_name)
+
+                if not (
+                    variant_value and variant_value in attribute_values[attribute_name]
+                ):
+                    raise ValidationError({attribute_name: "This value is not valid"})
+                variant_key.append(variant_value)
+
+            variant_key = "|".join(variant_key)
+            variant_dict[variant_key] = variant  # Dùng variant làm giá trị cho dict
+
+            # Kiểm tra các thuộc tính cần thiết
+            if "price" not in variant:
+                raise ValidationError({"price": "This field is required"})
+            if "image" not in variant:
+                raise ValidationError({"image": "This field is required"})
+
+        return list(variant_dict.values())
 
 
 class QueryProductSerializer(BaseQuerySerializer):

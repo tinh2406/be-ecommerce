@@ -1,81 +1,98 @@
-from products.models import ProductAttribute, ProductVariant
+from typing import List, Tuple
+
+from products.models import (
+    ProductAttribute,
+    ProductAttributeValue,
+    ProductAttributeVariant,
+    ProductVariant,
+)
 
 
 class ProductAttributeService:
 
     @classmethod
-    def create_product_attribute(
-        cls, name, values, product_id, **kwargs
-    ) -> ProductAttribute:
-        product_attribute = ProductAttribute.objects.create(
-            name=name, product_id=product_id
-        )
-        for value in values:
-            product_attribute.values.create(value=value)
+    def create_multiple_attribute(
+        cls, attributes: List[dict], product_id: int
+    ) -> Tuple[List[ProductAttribute], dict]:
 
-        return product_attribute
+        created_attributes = dict()
+
+        # Create product attributes
+        product_attributes = ProductAttribute.objects.bulk_create(
+            [
+                ProductAttribute(name=attribute.get("name"), product_id=product_id)
+                for attribute in attributes
+            ]
+        )
+
+        # Create product attribute values
+        product_attribute_values = []
+        for attribute, attribute_values in zip(product_attributes, attributes):
+            product_attributes_values_per_attribute = [
+                ProductAttributeValue(attribute=attribute, value=value)
+                for value in attribute_values["values"]
+            ]
+
+            product_attribute_values.extend(product_attributes_values_per_attribute)
+
+        product_attribute_values = ProductAttributeValue.objects.bulk_create(
+            product_attribute_values
+        )
+
+        for attribute_value in product_attribute_values:
+            created_attributes[
+                f"{attribute_value.attribute.name}_{attribute_value.value}"
+            ] = attribute_value.id
+
+        return product_attributes, created_attributes
 
     @classmethod
-    def create_product_variant(
-        cls, price, image, product_id, hot_price=None, **kwargs
-    ) -> ProductVariant:
-        product_variant = ProductVariant.objects.create(
-            product_id=product_id, price=price, image=image, hot_price=hot_price
+    def create_multiple_variants(
+        cls, variants: List[dict], product_id: int, created_attributes: dict
+    ) -> Tuple[List[ProductAttribute], dict]:
+
+        # create product variants
+        product_variants = ProductVariant.objects.bulk_create(
+            [
+                ProductVariant(
+                    price=variant.pop("price"),
+                    image=variant.pop("image"),
+                    product_id=product_id,
+                    hot_price=variant.pop("hot_price", None),
+                )
+                for variant in variants
+            ]
         )
 
-        return product_variant
+        product_variants_attributes = []
+        for variant, variant_attributes in zip(product_variants, variants):
+            for name, value in list(variant_attributes.items()):
+                if f"{name}_{value}" not in created_attributes:
+                    continue
+
+                product_variants_attributes.append(
+                    ProductAttributeVariant(
+                        product_variant=variant,
+                        product_attribute_value_id=created_attributes[
+                            f"{name}_{value}"
+                        ],
+                    )
+                )
+        ProductAttributeVariant.objects.bulk_create(product_variants_attributes)
+
+        return product_variants
 
     @classmethod
     def create_multiple(cls, attributes, variants, product_id, **kwargs):
-        product_attributes = dict()
 
-        created_attributes = {}
-        created_variants = []
+        product_attributes, created_attributes = cls.create_multiple_attribute(
+            attributes, product_id
+        )
+        product_variants = cls.create_multiple_variants(
+            variants, product_id, created_attributes
+        )
 
-        for attribute in attributes:
-            product_attribute = cls.create_product_attribute(
-                name=attribute.get("name"),
-                values=attribute.get("values"),
-                product_id=product_id,
-            )
-            product_attribute_values = product_attribute.values.all()
-
-            created_attributes[product_attribute.name] = [
-                attribute_value.value for attribute_value in product_attribute_values
-            ]
-
-            for attribute_value in product_attribute_values:
-                product_attributes[
-                    f"{product_attribute.name}_{attribute_value.value}"
-                ] = attribute_value.id
-
-        for variant in variants:
-            product_variant = cls.create_product_variant(
-                price=variant.pop("price"),
-                image=variant.pop("image"),
-                product_id=product_id,
-                hot_price=variant.pop("hot_price", None),
-            )
-            for name, value in list(variant.items()):
-                if f"{name}_{value}" not in product_attributes:
-                    continue
-                product_variant.attributes.create(
-                    product_attribute_value_id=product_attributes[f"{name}_{value}"]
-                )
-
-            created_variants.append(
-                {
-                    "price": product_variant.price,
-                    "image": product_variant.image,
-                    "hot_price": product_variant.hot_price,
-                    "attributes": {
-                        attribute.product_attribute_value.attribute.name: attribute.product_attribute_value.value
-                        for attribute in product_variant.attributes.all()
-                    },
-                }
-            )
-
-        return {"attributes": created_attributes, "variants": created_variants}
+        return product_attributes, product_variants
 
     @classmethod
     def delete_multiple(cls, product_id):
