@@ -62,11 +62,11 @@ class ProductViewSet(ModelViewSet):
     @action(detail=True, methods=["post"])
     def like(self, request, pk=None):
         user = request.user
-        res = QueryProductSerializer.like(pk, user_id=user.id)
+        res = ProductService.like(pk, user_id=user.id)
         return Response(res)
 
     @action(detail=True, methods=["delete"])
     def unlike(self, request, pk=None):
         user = request.user
-        res = QueryProductSerializer.unlike(pk, user_id=user.id)
+        res = ProductService.unlike(pk, user_id=user.id)
         return Response(res)
