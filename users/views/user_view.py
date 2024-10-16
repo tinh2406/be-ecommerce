@@ -20,7 +20,7 @@ class UserViewSet(ModelViewSet):
         user = request.user
         if str(user.id) == kwargs.get("pk"):
             return self.me(request)
-        if user.role not in (Roles.ADMIN, Roles.STAFF):
+        if not (user.is_superuser or user.role in (Roles.ADMIN, Roles.STAFF)):
             return Response(
                 {"message": "You do not have permission to access this user"},
                 status=403,
@@ -76,7 +76,7 @@ class UserViewSet(ModelViewSet):
         user = request.user
         pk = user.pk
 
-        if user.role in (Roles.ADMIN, Roles.STAFF):
+        if user.is_superuser or user.role in (Roles.ADMIN, Roles.STAFF):
             pk = kwargs.get("pk")
 
         if UserService.delete(pk):
@@ -87,7 +87,7 @@ class UserViewSet(ModelViewSet):
     @action(methods=["POST"], detail=True)
     def restore(self, request, **kwargs):
         user = request.user
-        if user.role not in (Roles.ADMIN, Roles.STAFF):
+        if user.is_superuser or user.role in (Roles.ADMIN, Roles.STAFF):
             return Response(
                 {"message": "You do not have permission to restore user"}, status=403
             )
@@ -138,7 +138,8 @@ class UserViewSet(ModelViewSet):
         return Response({"message": "Update role failed"}, status=400)
 
     def list(self, request: Request, *args, **kwargs):
-        if request.user.role not in (Roles.ADMIN, Roles.STAFF):
+        user = request.user
+        if not (user.is_superuser or user.role in (Roles.ADMIN, Roles.STAFF)):
             return self.me(request)
 
         query = QueryUserSerializer(data=request.query_params)
