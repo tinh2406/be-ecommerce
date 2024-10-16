@@ -7,7 +7,7 @@ from core.models import BaseTimeModel
 
 class Category(BaseTimeModel):
 
-    id = UUIDField(primary_key=True, auto_created=True, default=uuid4)
+    id = UUIDField(primary_key=True, default=uuid4)
     name = CharField(max_length=255)
 
     parent = ForeignKey(

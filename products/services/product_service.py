@@ -1,3 +1,5 @@
+from typing import Union
+
 from django.utils import timezone
 from rest_framework.exceptions import NotFound
 
@@ -45,7 +47,7 @@ class ProductService:
     @classmethod
     def get(
         cls, pk, raise_exception=True, allow_deleted=False, **kwargs
-    ) -> Product | None:
+    ) -> Union[Product, None]:
         try:
             product = Product.objects.get(
                 id=pk,
@@ -65,7 +67,9 @@ class ProductService:
             return None
 
     @classmethod
-    def update(cls, instance: Product, validated: dict, **kwargs) -> Product | None:
+    def update(
+        cls, instance: Product, validated: dict, **kwargs
+    ) -> Union[Product, None]:
 
         instance.name = validated.get("name")
         instance.price = validated.get("price")

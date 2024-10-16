@@ -1,10 +1,11 @@
+from typing import Union
+
 from django.utils import timezone
 from rest_framework.exceptions import NotFound
 
 from products.models import Category
 from products.utils.simple_category_serializer import SimpleCategorySerializer
 
-from ..utils.simple_category_serializer import SimpleCategorySerializer
 from .es_category_service import ESCategoryService
 
 
@@ -22,7 +23,9 @@ class CategoryService:
         return category
 
     @classmethod
-    def get(cls, pk, raise_exception=True, allow_deleted=False) -> Category | None:
+    def get(
+        cls, pk, raise_exception=True, allow_deleted=False
+    ) -> Union[Category, None]:
         try:
             category = Category.objects.get(id=pk)
 
@@ -38,7 +41,7 @@ class CategoryService:
     @classmethod
     def update(
         cls, instance: Category, validated: dict, partial=False, **kwargs
-    ) -> Category | None:
+    ) -> Union[Category, None]:
         if partial:
 
             instance.name = validated.get("name", instance.name)

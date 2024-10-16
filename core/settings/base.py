@@ -11,7 +11,8 @@ API_PORT = env("API_PORT")
 # Redis
 REDIS_HOST = env("REDIS_HOST", default="localhost")
 REDIS_PORT = env("REDIS_PORT", default=6379)
-REDIS_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/"
+REDIS_PASSWORD = env("REDIS_PASSWORD", default="yourpassword")
+REDIS_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/"
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
@@ -21,12 +22,13 @@ CACHES = {
     }
 }
 
+RABBITMQ_AMQP_HOST = env("RABBITMQ_AMQP_HOST", default="localhost")
 RABBITMQ_AMQP_PORT = env("RABBITMQ_AMQP_PORT", default=5672)
 RABBITMQ_DEFAULT_USER = env("RABBITMQ_DEFAULT_USER", default="guest")
 RABBITMQ_DEFAULT_PASS = env("RABBITMQ_DEFAULT_PASS", default="guest")
 
 # Celery
-CELERY_BROKER_URL = f"amqp://{RABBITMQ_DEFAULT_USER}:{RABBITMQ_DEFAULT_PASS}@localhost:{RABBITMQ_AMQP_PORT}//"
+CELERY_BROKER_URL = f"amqp://{RABBITMQ_DEFAULT_USER}:{RABBITMQ_DEFAULT_PASS}@{RABBITMQ_AMQP_HOST}:{RABBITMQ_AMQP_PORT}//"
 
 # Định dạng và giao thức serialization
 CELERY_ACCEPT_CONTENT = ["json"]
@@ -43,9 +45,12 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 # ElasticSearch
 ELASTICSEARCH_HOST = env("ELASTICSEARCH_HOST", default="localhost")
 ELASTICSEARCH_PORT = env("ELASTICSEARCH_PORT", default=9200)
+ELASTIC_USERNAME = env("ELASTIC_USERNAME", default="elastic")
+ELASTIC_PASSWORD = env("ELASTIC_PASSWORD", default="changeme")
+ELASTICSEARCH_URL = f"http://{ELASTIC_USERNAME}:{ELASTIC_PASSWORD}@{ELASTICSEARCH_HOST}:{ELASTICSEARCH_PORT}/"
 ELASTICSEARCH_DSL = {
     "default": {
-        "hosts": [f"http://{ELASTICSEARCH_HOST}:{ELASTICSEARCH_PORT}/"],
+        "hosts": [ELASTICSEARCH_URL],
     },
 }
 
@@ -162,8 +167,8 @@ def db_config(prefix="", test=None):
         "NAME": env("MYSQL_DATABASE"),
         "USER": "root",
         "PASSWORD": env("MYSQL_ROOT_PASSWORD"),
-        "HOST": "127.0.0.1",
-        "PORT": "3306",
+        "HOST": env("MYSQL_HOST"),
+        "PORT": env("MYSQL_PORT"),
         "OPTIONS": {
             "init_command": "SET GLOBAL max_connections = 100000",
             "charset": "utf8mb4",

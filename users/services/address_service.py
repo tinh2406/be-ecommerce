@@ -1,3 +1,5 @@
+from typing import Union
+
 from django.core.cache import cache
 from rest_framework.exceptions import NotFound
 
@@ -98,7 +100,7 @@ class AddressService:
     @classmethod
     def get(
         cls, address_id, user_id=None, raise_exception=True, **kwargs
-    ) -> Address | None:
+    ) -> Union[Address, None]:
         try:
             address = Address.objects.get(id=address_id)
             if user_id and address.user_id != user_id:

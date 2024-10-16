@@ -1,3 +1,5 @@
+from typing import Union
+
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.template.loader import render_to_string
@@ -35,7 +37,7 @@ class UserService:
         allow_deleted=False,
         allow_banned=False,
         **kwargs,
-    ) -> User | None:
+    ) -> Union[User, None]:
         try:
             user = User.objects.get(email=email, related_fields="profile")
 
@@ -57,7 +59,7 @@ class UserService:
         allow_deleted=False,
         allow_banned=False,
         **kwargs,
-    ) -> User | None:
+    ) -> Union[User, None]:
         try:
             user = User.objects.get(id=pk, related_fields="profile")
             if not allow_deleted and user.deleted_at:
