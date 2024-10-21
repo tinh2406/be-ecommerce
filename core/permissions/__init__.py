@@ -1,0 +1,2 @@
+from .is_admin_permission import IsAdminPermission as IsAdminPermission
+from .is_staff_permission import IsStaffPermission as IsStaffPermission
