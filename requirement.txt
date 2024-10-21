@@ -13,3 +13,4 @@ django-elasticsearch-dsl
 mysqlclient
 djangorestframework-jwt
 django-redis
+django_celery_beat
