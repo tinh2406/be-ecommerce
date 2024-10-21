@@ -86,7 +86,7 @@ THIRD_PARTY_APPS = (
     "django_nose",
     "djongo"
 )
-LOCAL_APPS = ("users", "products")
+LOCAL_APPS = ("users", "products", "crawlers")
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 AUTH_USER_MODEL = "users.User"

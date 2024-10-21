@@ -3,6 +3,7 @@ from rest_framework.viewsets import ModelViewSet
 
 from core.permissions import IsAdminPermission
 from crawlers.serializers import ProductMapperSerializer
+from crawlers.services import ProductMapperService
 
 
 class ProductMapperViewSet(ModelViewSet):
@@ -15,3 +16,8 @@ class ProductMapperViewSet(ModelViewSet):
 
         mapper_id = data.save()
         return Response({"data": mapper_id})
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = ProductMapperService.get(kwargs.get("pk"))
+        data = ProductMapperSerializer(instance).data
+        return Response(data)
