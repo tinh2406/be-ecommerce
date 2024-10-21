@@ -84,6 +84,7 @@ THIRD_PARTY_APPS = (
     "django_filters",
     "bandit",
     "django_nose",
+    "djongo"
 )
 LOCAL_APPS = ("users", "products")
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -178,9 +179,24 @@ def db_config(prefix="", test=None):
     }
 
 
+def mongo_config(prefix="", test=None):
+    if test is None:
+        test = {}
+    return {
+        'ENGINE': 'djongo',
+        'NAME': env('MONGO_DATABASE'),
+        'CLIENT': {
+            'host': env('MONGO_HOST'),
+        }
+    }
+
+
 DATABASES = {
     "default": db_config(),
+    "mongo": mongo_config(),
 }
+
+DATABASE_ROUTERS = ['core.db_routers.DBRouter']
 
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
