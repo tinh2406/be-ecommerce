@@ -35,12 +35,14 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 
+CELERY_TIMEZONE = None  # Không sử dụng múi giờ
+CELERY_ENABLE_UTC = False  # Không sử dụng UTC
+
 # Lưu kết quả vào RabbitMQ (sử dụng RPC):
 CELERY_RESULT_BACKEND = "rpc://"
 
 # Tự động kết nối lại nếu kết nối với broker bị mất khi khởi động
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
-
 
 # ElasticSearch
 ELASTICSEARCH_HOST = env("ELASTICSEARCH_HOST", default="localhost")
@@ -77,12 +79,14 @@ THIRD_PARTY_APPS = (
     "rest_framework",
     "django_elasticsearch_dsl",
     "corsheaders",
+    "django_celery_beat",
     "django_crontab",
     "django_filters",
     "bandit",
     "django_nose",
+    "djongo",
 )
-LOCAL_APPS = ("users", "products")
+LOCAL_APPS = ("users", "products", "crawlers")
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 AUTH_USER_MODEL = "users.User"
@@ -137,7 +141,6 @@ REST_FRAMEWORK = {
 # Use nose to run all tests
 TEST_RUNNER = "django_nose.NoseTestSuiteRunner"
 
-
 ROOT_URLCONF = "core.urls"
 
 TEMPLATES = [
@@ -176,9 +179,24 @@ def db_config(prefix="", test=None):
     }
 
 
+def mongo_config(prefix="", test=None):
+    if test is None:
+        test = {}
+    return {
+        "ENGINE": "djongo",
+        "NAME": env("MONGO_DATABASE"),
+        "CLIENT": {
+            "host": env("MONGO_HOST"),
+        },
+    }
+
+
 DATABASES = {
     "default": db_config(),
+    "mongo": mongo_config(),
 }
+
+DATABASE_ROUTERS = ["core.db_routers.DBRouter"]
 
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
@@ -206,7 +224,7 @@ TIME_ZONE = "Asia/Ho_Chi_Minh"
 USE_I18N = True
 
 USE_L10N = True
-USE_TZ = False
+USE_TZ = True
 
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 STATIC_URL = "/static/"

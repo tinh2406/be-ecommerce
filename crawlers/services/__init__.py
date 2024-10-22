@@ -1,0 +1,2 @@
+from .product_mapper_service import ProductMapperService as ProductMapperService
+from .products_mapper_service import ProductsMapperService as ProductsMapperService
