@@ -1,3 +1,4 @@
+from .crawler_serializer import CrawlerSerializer as CrawlerSerializer
 from .product_mapper_serializer import (
     ProductMapperSerializer as ProductMapperSerializer,
 )
