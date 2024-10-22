@@ -17,6 +17,14 @@ class ProductsMapperViewSet(ModelViewSet):
         mapper_id = data.save()
         return Response({"data": mapper_id})
 
+    def update(self, request, *args, **kwargs):
+        instance = ProductsMapperService.get(kwargs.get("pk"))
+        data = ProductsMapperSerializer(instance, data=request.data)
+        data.is_valid(raise_exception=True)
+
+        mapper_id = data.save()
+        return Response({"data": mapper_id})
+
     def retrieve(self, request, *args, **kwargs):
         instance = ProductsMapperService.get(kwargs.get("pk"))
         data = ProductsMapperSerializer(instance).data

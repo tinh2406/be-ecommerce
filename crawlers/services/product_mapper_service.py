@@ -13,6 +13,15 @@ class ProductMapperService:
         return mapper
 
     @classmethod
+    def update(cls, instance: ProductMapper, validated: dict) -> ProductMapper:
+
+        for key, value in validated.items():
+            setattr(instance, key, value)
+        instance.save()
+
+        return instance
+
+    @classmethod
     def get(
         cls, pk: int, raise_exception: bool = True, allow_deleted: bool = False
     ) -> Union["ProductMapper", None]:
