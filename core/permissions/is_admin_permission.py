@@ -1,5 +1,7 @@
 from rest_framework.permissions import BasePermission
+
 from users.constants import Roles
+
 
 class IsAdminPermission(BasePermission):
     """
@@ -7,4 +9,4 @@ class IsAdminPermission(BasePermission):
     """
 
     def has_permission(self, request, view):
-        return bool(request.user and request.user.role==Roles.ADMIN)
+        return bool(request.user and request.user.role == Roles.ADMIN)
