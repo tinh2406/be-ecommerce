@@ -89,6 +89,8 @@ class CrawlerSerializer(Serializer):
         return attrs
 
     def to_representation(self, instance):
+        kwargs = json.loads(instance.kwargs)
+        request_params = RequestParamsService.get(kwargs["request_params_id"])
         data = {
             "id": instance.id,
             "name": instance.name,
@@ -98,7 +100,9 @@ class CrawlerSerializer(Serializer):
             "total_run_count": instance.total_run_count,
             "date_changed": instance.date_changed,
             "start_time": instance.start_time,
-            "kwargs": json.loads(instance.kwargs),
+            "kwargs": instance.kwargs,
+            "params": request_params.params,
+            "headers": request_params.headers,
         }
         return data
 

@@ -1,4 +1,5 @@
 import json
+from typing import Union
 
 from django_celery_beat.models import CrontabSchedule, PeriodicTask
 
@@ -42,3 +43,13 @@ class CrawlerService:
         )
 
         return task
+
+    @classmethod
+    def get(cls, pk, raise_exception=True) -> Union["PeriodicTask", None]:
+        try:
+            crawler = PeriodicTask.objects.get(id=pk)
+            return crawler
+        except PeriodicTask.DoesNotExist:
+            if raise_exception:
+                raise PeriodicTask.DoesNotExist
+            return None

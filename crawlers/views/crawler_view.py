@@ -3,6 +3,7 @@ from rest_framework.viewsets import ModelViewSet
 
 from core.permissions import IsAdminPermission
 from crawlers.serializers import CrawlerSerializer
+from crawlers.services import CrawlerService
 
 
 class CrawlerViewSet(ModelViewSet):
@@ -15,3 +16,8 @@ class CrawlerViewSet(ModelViewSet):
 
         crawler_id = data.save()
         return Response({"data": crawler_id})
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = CrawlerService.get(kwargs.get("pk"))
+        data = CrawlerSerializer(instance).data
+        return Response(data)
