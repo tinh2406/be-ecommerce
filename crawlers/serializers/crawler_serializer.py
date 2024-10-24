@@ -100,7 +100,7 @@ class CrawlerSerializer(Serializer):
             "total_run_count": instance.total_run_count,
             "date_changed": instance.date_changed,
             "start_time": instance.start_time,
-            "kwargs": instance.kwargs,
+            "kwargs": kwargs,
             "params": request_params.params,
             "headers": request_params.headers,
         }
@@ -109,6 +109,13 @@ class CrawlerSerializer(Serializer):
     def create(self, validated_data):
         try:
             crawler = CrawlerService.create(validated_data)
+            return crawler.id
+        except Exception as e:
+            raise ValidationError(e)
+
+    def update(self, instance, validated_data):
+        try:
+            crawler = CrawlerService.update(instance, validated_data)
             return crawler.id
         except Exception as e:
             raise ValidationError(e)

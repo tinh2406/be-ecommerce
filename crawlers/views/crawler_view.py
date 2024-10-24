@@ -1,3 +1,4 @@
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
@@ -21,3 +22,21 @@ class CrawlerViewSet(ModelViewSet):
         instance = CrawlerService.get(kwargs.get("pk"))
         data = CrawlerSerializer(instance).data
         return Response(data)
+
+    def update(self, request, *args, **kwargs):
+        instance = CrawlerService.get(kwargs.get("pk"))
+        data = CrawlerSerializer(instance, data=request.data)
+        data.is_valid(raise_exception=True)
+
+        crawler_id = data.save()
+        return Response({"data": crawler_id})
+
+    @action(detail=True, methods=["post"])
+    def activate(self, request, *args, **kwargs):
+        CrawlerService.activate_task(kwargs.get("pk"))
+        return Response({"data": True})
+
+    @action(detail=True, methods=["post"])
+    def deactivate(self, request, *args, **kwargs):
+        CrawlerService.deactivate_task(kwargs.get("pk"))
+        return Response({"data": True})
