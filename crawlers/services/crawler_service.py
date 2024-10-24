@@ -15,7 +15,6 @@ class CrawlerService:
         start_time = validated.get("start_time")
         end_time = validated.get("end_time")
         cycle_length = validated.get("cycle_length")
-
         request_params_id = validated.get("request_params_id")
         products_mapper_id = validated.get("products_mapper_id")
         product_mapper_id = validated.get("product_mapper_id")
@@ -97,3 +96,47 @@ class CrawlerService:
         instance = cls.get(pk)
         instance.delete()
         return True
+
+    @classmethod
+    def search(cls, query_params: dict, paginate=True, **kwargs):
+
+        query_set = PeriodicTask.objects.all()
+
+        # Lấy các tham số truy vấn
+        keyword = query_params.get("keyword")
+        is_running = query_params.get("is_running")
+        last_run_from = query_params.get("last_run_from")
+        last_run_to = query_params.get("last_run_to")
+        order_by = query_params.get("order_by") or "last_run_at"
+        order_type = query_params.get("order_type") or "desc"
+        page_size = query_params.get("page_size") or 10
+        page = query_params.get("page") or 1
+        skip = (page - 1) * page_size  # Tính toán skip từ page và page_size
+
+        if is_running is not None:
+            query_set = query_set.filter(enabled=is_running)
+
+        # Lọc theo các thuộc tính khác
+        if keyword:
+            query_set = query_set.filter(name__icontains=keyword)
+
+        if last_run_from:
+            query_set = query_set.filter(last_run_at__gte=last_run_from)
+        if last_run_to:
+            query_set = query_set.filter(last_run_at__lte=last_run_to)
+
+        if paginate:
+            total = query_set.count()
+            query_set = query_set.order_by(
+                f"{'-' if order_type=='desc' else ''}{order_by}"
+            )[skip : skip + page_size]
+
+            meta = {
+                "page_count": (total - 1) // page_size + 1,
+                "item_count": total,
+                "page_size": page_size,
+                "page": page,
+            }
+            return query_set, meta
+
+        return query_set
