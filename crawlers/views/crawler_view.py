@@ -40,3 +40,7 @@ class CrawlerViewSet(ModelViewSet):
     def deactivate(self, request, *args, **kwargs):
         CrawlerService.deactivate_task(kwargs.get("pk"))
         return Response({"data": True})
+
+    def destroy(self, request, *args, **kwargs):
+        CrawlerService.delete(kwargs.get("pk"))
+        return Response({"data": True})

@@ -91,3 +91,9 @@ class CrawlerService:
         instance.enabled = False
         instance.save()
         return True
+
+    @classmethod
+    def delete(cls, pk):
+        instance = cls.get(pk)
+        instance.delete()
+        return True
