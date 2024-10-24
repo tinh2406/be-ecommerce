@@ -14,7 +14,9 @@ class Category(BaseTimeModel):
         "products.Category", null=True, on_delete=PROTECT, related_name="childs"
     )
 
-    cache_key_fields = ["id"]
+    source_id = CharField(max_length=255, null=True)
+
+    cache_key_fields = ["id", "source_id"]
     key: str = "category_"
 
     class Meta:
