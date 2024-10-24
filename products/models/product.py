@@ -25,7 +25,7 @@ class Product(BaseTimeModel):
 
     source_id = CharField(max_length=255, null=True)
 
-    cache_key_fields = ["id", "source_id"]
+    cache_key_fields = ["id"]
     cache_time = 300
     key = "product_"
 

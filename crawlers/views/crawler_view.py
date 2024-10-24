@@ -3,7 +3,11 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from core.permissions import IsAdminPermission
-from crawlers.serializers import CrawlerSerializer, QueryCrawlerSerializer
+from crawlers.serializers import (
+    CrawlerSerializer,
+    QueryCrawlerSerializer,
+    SimpleCrawlerSerializer,
+)
 from crawlers.services import CrawlerService
 
 
@@ -51,6 +55,6 @@ class CrawlerViewSet(ModelViewSet):
         query_params.is_valid(raise_exception=True)
         query_set, meta = CrawlerService.search(query_params.validated_data)
 
-        crawlers = CrawlerSerializer(query_set, many=True).data
+        crawlers = SimpleCrawlerSerializer(query_set, many=True).data
 
         return Response({"data": crawlers, **meta})

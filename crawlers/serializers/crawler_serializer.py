@@ -83,8 +83,19 @@ class CrawlerSerializer(Serializer):
         if int(attrs.get("quantity") or 10) < 0:
             raise ValidationError({"quantity": "quantity must be greater than 0"})
 
-        request_params = RequestParamsService.create(attrs)
-        attrs["request_params_id"] = str(request_params.id)
+        params = attrs.get("params")
+        take_key = params.get("take_key")
+        page_key = params.get("page_key")
+        if not take_key:
+            raise ValidationError({"params": "take_key is required"})
+        if not page_key:
+            raise ValidationError({"params": "page_key is required"})
+        take = params.get(take_key)
+        page = params.get(page_key)
+        if not take:
+            raise ValidationError({"params": f"{take_key} is required"})
+        if not page:
+            raise ValidationError({"params": f"{page_key} is required"})
 
         try:
             test_crawl_config(**attrs)
@@ -131,7 +142,7 @@ class SimpleCrawlerSerializer(ModelSerializer):
         model = PeriodicTask
         fields = "__all__"
 
-    def to_representation(self, instance):
+    def to_representation(self, instance: PeriodicTask):
         instance.kwargs = json.loads(instance.kwargs)
         return super().to_representation(instance)
 

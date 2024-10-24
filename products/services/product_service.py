@@ -1,9 +1,10 @@
 from typing import Union
 
+from celery import shared_task
 from django.utils import timezone
 from rest_framework.exceptions import NotFound
 
-from products.models import Product, UserLikeProduct
+from products.models import Category, Product, UserLikeProduct
 from products.serializers.simple_product_serializer import SimpleProductSerializer
 
 from .es_product_service import ESProductService
@@ -13,8 +14,10 @@ from .product_image_service import ProductImageService
 
 class ProductService:
 
-    @classmethod
-    def create(cls, validated: dict, **kwargs) -> Product:
+    @staticmethod
+    def create_product(
+        validated: dict,
+    ):
         name = validated.get("name")
         price = validated.get("price")
         thumbnail = validated.get("thumbnail")
@@ -25,6 +28,7 @@ class ProductService:
         images = validated.get("images", None)
         attributes = validated.get("attributes", None)
         variants = validated.get("variants", None)
+        source_id = validated.get("product_id", None)
 
         product = Product.objects.create(
             name=name,
@@ -33,6 +37,7 @@ class ProductService:
             price=price,
             category_id=category_id,
             hot_price=hot_price,
+            source_id=source_id,
         )
         if images:
             ProductImageService.create_multiple(images, product.id)
@@ -43,6 +48,31 @@ class ProductService:
         ESProductService.index.delay(serializer.data)
 
         return product
+
+    @staticmethod
+    @shared_task
+    def create_product_in_background(validated: dict, **kwargs) -> bool:
+        if validated.get("product_id"):
+            instance = Product.objects.filter(
+                source_id=validated.get("product_id")
+            ).first()
+            if instance:
+                return False
+
+        try:
+            category = Category.objects.filter(
+                source_id=validated.get("category_id")
+            ).first()
+        except Category.DoesNotExist:
+            category = None
+        if not category:
+            category = Category.objects.create(
+                name=validated.get("category_name"),
+                source_id=validated.get("category_id"),
+            )
+        validated["category_id"] = category.id
+        ProductService.create_product(validated)
+        return True
 
     @classmethod
     def get(

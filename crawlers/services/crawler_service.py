@@ -3,6 +3,8 @@ from typing import Union
 
 from django_celery_beat.models import CrontabSchedule, PeriodicTask
 
+from crawlers.services.request_params_service import RequestParamsService
+
 
 class CrawlerService:
 
@@ -18,6 +20,9 @@ class CrawlerService:
         request_params_id = validated.get("request_params_id")
         products_mapper_id = validated.get("products_mapper_id")
         product_mapper_id = validated.get("product_mapper_id")
+
+        request_params = RequestParamsService.create(validated)
+        request_params_id = str(request_params.id)
 
         schedule, _ = CrontabSchedule.objects.get_or_create(
             minute=f"*/{cycle_length}",
@@ -61,17 +66,6 @@ class CrawlerService:
         )
         instance.crontab = schedule
         instance.name = validated.get("name")
-        instance.enabled = False
-        instance.task = "crawl_task"
-        instance.kwargs = json.dumps(
-            {
-                "url": validated.get("url"),
-                "quantity": validated.get("quantity"),
-                "request_params_id": validated.get("request_params_id"),
-                "product_mapper_id": validated.get("product_mapper_id"),
-                "products_mapper_id": validated.get("products_mapper_id"),
-            }
-        )
         instance.expires = validated.get("end_time")
         instance.start_time = validated.get("start_time")
         instance.save()

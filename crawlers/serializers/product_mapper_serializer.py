@@ -2,8 +2,8 @@ from rest_framework.serializers import (
     BooleanField,
     ChoiceField,
     DateTimeField,
-    JSONField,
     ModelSerializer,
+    ValidationError,
 )
 
 from core.utils import BaseQuerySerializer
@@ -13,13 +13,26 @@ from crawlers.services import ProductMapperService
 
 
 class ProductMapperSerializer(ModelSerializer):
-
-    properties = JSONField(default=dict)
-
     class Meta:
         model = ProductMapper
         fields = "__all__"
         read_only_fields = ["id", "created_at", "updated_at"]
+
+    def validate(self, attrs):
+        if attrs.get("attributes") and attrs.get("variants"):
+            if not all(
+                [
+                    attrs.get("attribute_name"),
+                    attrs.get("attribute_code"),
+                    attrs.get("attribute_values"),
+                    attrs.get("variant_price"),
+                    attrs.get("variant_image"),
+                ]
+            ):
+                raise ValidationError(
+                    "Missing required fields for attributes or variants"
+                )
+        return attrs
 
     def create(self, validated_data):
         mapper = ProductMapperService.create(validated_data)

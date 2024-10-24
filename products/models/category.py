@@ -16,7 +16,7 @@ class Category(BaseTimeModel):
 
     source_id = CharField(max_length=255, null=True)
 
-    cache_key_fields = ["id", "source_id"]
+    cache_key_fields = ["id"]
     key: str = "category_"
 
     class Meta:

@@ -16,10 +16,10 @@ class RequestParamsService:
         return request_params
 
     @classmethod
-    def update_saved_product(cls, pk, skip):
+    def update_params(cls, pk, params):
         instance = cls.get(pk, raise_exception=True)
         if instance:
-            instance.params["skip"] = skip
+            instance.params = params
             instance.save()
         return instance
 

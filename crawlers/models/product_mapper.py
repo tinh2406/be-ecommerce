@@ -1,6 +1,6 @@
 import uuid
 
-from django.db.models import CharField, JSONField, UUIDField
+from django.db.models import CharField, UUIDField
 
 from core.models import BaseTimeModel
 
@@ -23,7 +23,16 @@ class ProductMapper(BaseTimeModel):
     product_category_name = CharField(max_length=255)
     product_images = CharField(max_length=255, null=True, blank=True)
 
-    properties = JSONField(default=dict)
+    attributes = CharField(max_length=255, null=True, blank=True)
+    attribute_code = CharField(max_length=255, null=True, blank=True)
+    attribute_name = CharField(max_length=255, null=True, blank=True)
+    attribute_values = CharField(max_length=255, null=True, blank=True)
+    attribute_value_name = CharField(max_length=255, null=True, blank=True)
+
+    variants = CharField(max_length=255, null=True, blank=True)
+    variant_price = CharField(max_length=255)
+    variant_hot_price = CharField(max_length=255, null=True, blank=True)
+    variant_image = CharField(max_length=255, null=True, blank=True)
 
     cache_key_fields = ["id"]
     key = "product_mapper_"
