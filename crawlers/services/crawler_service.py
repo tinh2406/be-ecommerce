@@ -1,9 +1,49 @@
 import json
 from typing import Union
 
-from django_celery_beat.models import CrontabSchedule, PeriodicTask
+from django_celery_beat.models import CrontabSchedule, IntervalSchedule, PeriodicTask
+from rest_framework.exceptions import NotFound
 
+from crawlers.constants import ScheduleChoice
 from crawlers.services.request_params_service import RequestParamsService
+
+
+def periodic_task_cron(every, cycle_length, start_time):
+    if cycle_length:
+        schedule, _ = IntervalSchedule.objects.get_or_create(
+            every=cycle_length,
+            period=IntervalSchedule.MINUTES,
+        )
+    if every == ScheduleChoice.MINUTE:
+        schedule, _ = CrontabSchedule.objects.get_or_create(
+            minute="*/1",
+        )
+    elif every == ScheduleChoice.HOUR:
+        schedule, _ = CrontabSchedule.objects.get_or_create(
+            hour="*/1",
+            minute=f"{start_time.minute}",
+        )
+    elif every == ScheduleChoice.DAY:
+        schedule, _ = CrontabSchedule.objects.get_or_create(
+            day_of_month="*/1",
+            hour=f"{start_time.hour}",
+            minute=f"{start_time.minute}",
+        )
+    elif every == ScheduleChoice.MONTH:
+        schedule, _ = CrontabSchedule.objects.get_or_create(
+            month_of_year="*/1",
+            day_of_month=f"{start_time.day}",
+            hour=f"{start_time.hour}",
+            minute=f"{start_time.minute}",
+        )
+    else:
+        schedule, _ = CrontabSchedule.objects.get_or_create(
+            month_of_year=f"{start_time.month}",
+            day_of_month=f"{start_time.day}",
+            hour=f"{start_time.hour}",
+            minute=f"{start_time.minute}",
+        )
+    return schedule
 
 
 class CrawlerService:
@@ -17,15 +57,14 @@ class CrawlerService:
         start_time = validated.get("start_time")
         end_time = validated.get("end_time")
         cycle_length = validated.get("cycle_length")
+        every = validated.get("every")
         products_mapper_id = validated.get("products_mapper_id")
         product_mapper_id = validated.get("product_mapper_id")
 
+        schedule = periodic_task_cron(every, cycle_length, start_time)
+
         request_params = RequestParamsService.create(validated)
         request_params_id = str(request_params.id)
-
-        schedule, _ = CrontabSchedule.objects.get_or_create(
-            minute=f"*/{cycle_length}",
-        )
 
         task = PeriodicTask.objects.create(
             crontab=schedule,
@@ -54,7 +93,7 @@ class CrawlerService:
             return crawler
         except PeriodicTask.DoesNotExist:
             if raise_exception:
-                raise PeriodicTask.DoesNotExist
+                raise NotFound("Crawler not found")
             return None
 
     @classmethod
@@ -121,7 +160,7 @@ class CrawlerService:
         if paginate:
             total = query_set.count()
             query_set = query_set.order_by(
-                f"{'-' if order_type=='desc' else ''}{order_by}"
+                f"{'-' if order_type == 'desc' else ''}{order_by}"
             )[skip : skip + page_size]
 
             meta = {

@@ -14,7 +14,7 @@ from rest_framework.serializers import (
 )
 
 from core.utils import BaseQuerySerializer
-from crawlers.constants import CrawlerOrderChoice
+from crawlers.constants import CrawlerOrderChoice, ScheduleChoice
 from crawlers.services import CrawlerService, RequestParamsService
 from crawlers.tasks.crawl_task import test_crawl_config
 
@@ -50,7 +50,8 @@ class CrawlerSerializer(Serializer):
     quantity = IntegerField(min_value=1)
     start_time = DateTimeField()
     end_time = DateTimeField()
-    cycle_length = IntegerField(min_value=1)
+    cycle_length = IntegerField(min_value=1, required=False)
+    every = ChoiceField(choices=ScheduleChoice.CHOICES, required=False)
 
     product_mapper_id = CharField(max_length=255)
     products_mapper_id = CharField(max_length=255)
@@ -64,6 +65,13 @@ class CrawlerSerializer(Serializer):
                 {"end_time": "end_time must be greater than start_time"}
             )
         attrs["params"] = validate_params(attrs["params"])
+
+        if attrs.get("cycle_length") and attrs.get("every"):
+            raise ValidationError(
+                {"cycle_length": "cycle_length and every can not be used together"}
+            )
+        if not attrs.get("cycle_length") and not attrs.get("every"):
+            raise ValidationError({"cycle_length": "cycle_length or every is required"})
 
         try:
             test_crawl_config(**attrs)
