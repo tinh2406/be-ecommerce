@@ -6,7 +6,7 @@ from django.db.models import Manager
 
 class BaseCacheManager(Manager):
 
-    def get(self, related_fields=None, *args, **kwargs):
+    def get_with_allow_deleted(self, related_fields=None, *args, **kwargs):
         if len(kwargs) != 1:
             return super(Manager, self).get(*args, **kwargs)
 
@@ -46,6 +46,12 @@ class BaseCacheManager(Manager):
             cache.set(f"{cache_key}{att_value}", pickled_object, timeout=cache_time)
 
         return obj
+
+    def get(self, related_fields=None, *args, **kwargs):
+        obj = self.get_with_allow_deleted(related_fields, *args, **kwargs)
+        if not obj.deleted_at:
+            return obj
+        return None
 
     def update(self, **kwargs):
         cache_key = self.model.key

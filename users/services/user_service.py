@@ -6,6 +6,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from rest_framework.exceptions import NotFound
 
+from core.services import BaseService
 from users.constants import Roles
 from users.models import User
 from users.services.es_user_service import ESUserService
@@ -15,7 +16,11 @@ from users.tasks import send_email_task
 from users.utils.simple_user_serializer import SimpleUserSerializer
 
 
-class UserService:
+class UserService(BaseService):
+
+    model = User
+    es_service = ESUserService
+
     @classmethod
     def create(cls, validated, **kwargs) -> User:
         email = validated.get("email")
@@ -25,8 +30,7 @@ class UserService:
             user = User.objects.create_user(email=email, password=password, name=name)
             ProfileService.create(user=user)
 
-        serializer = SimpleUserSerializer(user)
-        ESUserService.index.delay(serializer.data)
+        cls.save_es(user)
         return user
 
     @classmethod
@@ -34,35 +38,13 @@ class UserService:
         cls,
         email,
         raise_exception=True,
-        allow_deleted=False,
         allow_banned=False,
         **kwargs,
     ) -> Union[User, None]:
         try:
             user = User.objects.get(email=email, related_fields="profile")
 
-            if not allow_deleted and user.deleted_at:
-                raise NotFound("User not found")
-            if not allow_banned and user.banned_at:
-                raise NotFound("User not found")
-            return user
-        except Exception:
-            if raise_exception:
-                raise NotFound("User not found")
-            return None
-
-    @classmethod
-    def get(
-        cls,
-        pk,
-        raise_exception=True,
-        allow_deleted=False,
-        allow_banned=False,
-        **kwargs,
-    ) -> Union[User, None]:
-        try:
-            user = User.objects.get(id=pk, related_fields="profile")
-            if not allow_deleted and user.deleted_at:
+            if user.deleted_at:
                 raise NotFound("User not found")
             if not allow_banned and user.banned_at:
                 raise NotFound("User not found")
@@ -95,7 +77,8 @@ class UserService:
         else:
             instance.name = validated.get("name")
 
-        cls.save_data(instance)
+        instance.save()
+        cls.save_es(instance)
         return instance
 
     @classmethod
@@ -115,7 +98,8 @@ class UserService:
         instance = cls.get_by_email(email)
         if instance:
             instance.email = new_email
-            cls.save_data(instance)
+            instance.save()
+            cls.save_es(instance)
             return True
         return False
 
@@ -128,7 +112,8 @@ class UserService:
             raise PermissionDenied("Old password is incorrect")
 
         instance.set_password(new_password)
-        cls.save_data(instance)
+        instance.save()
+        cls.save_es(instance)
         return True
 
     @classmethod
@@ -142,28 +127,8 @@ class UserService:
             return False
 
         instance.set_password(new_password)
-        cls.save_data(instance)
-        return True
-
-    @classmethod
-    def delete(cls, pk, **kwargs) -> bool:
-        instance = cls.get(pk, allow_banned=True, raise_exception=True)
-        if not instance:
-            return False
-        instance.soft_delete()
-        ESUserService.soft_delete.delay(str(pk))
-
-        return True
-
-    @classmethod
-    def restore(cls, pk, **kwargs) -> bool:
-        instance = cls.get(pk, allow_banned=True, allow_deleted=True)
-        if not instance:
-            return False
-
-        instance.restore()
-        ESUserService.restore.delay(str(pk))
-
+        instance.save()
+        cls.save_es(instance)
         return True
 
     @classmethod
@@ -173,7 +138,8 @@ class UserService:
             return False
 
         instance.banned_at = timezone.now()
-        cls.save_data(instance)
+        instance.save()
+        cls.save_es(instance)
 
         return True
 
@@ -184,7 +150,8 @@ class UserService:
             return False
 
         instance.banned_at = None
-        cls.save_data(instance)
+        instance.save()
+        cls.save_es(instance)
 
         return True
 
@@ -201,13 +168,13 @@ class UserService:
 
             instance.role = role
 
-        cls.save_data(instance)
+        instance.save()
+        cls.save_es(instance)
 
         return True
 
     @classmethod
-    def save_data(cls, instance: User):
-        instance.save()
+    def save_es(cls, instance: User):
         serializer = SimpleUserSerializer(instance)
-        ESUserService.update.delay(serializer.data)
+        ESUserService.index.delay(serializer.data)
         return instance

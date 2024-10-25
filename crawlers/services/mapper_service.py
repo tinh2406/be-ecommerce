@@ -1,56 +1,18 @@
-from typing import Union
+from django.db.models import Model
 
-from rest_framework.exceptions import NotFound
+from core.services import BaseService
+from crawlers.models import ProductMapper, ProductsMapper
 
-from crawlers.models import ProductsMapper
 
+class SearchMapperService:
 
-class ProductsMapperService:
-
-    @classmethod
-    def create(cls, validated: dict) -> ProductsMapper:
-        mapper = ProductsMapper.objects.create(**validated)
-        return mapper
-
-    @classmethod
-    def update(cls, instance: ProductsMapper, validated: dict) -> ProductsMapper:
-
-        for key, value in validated.items():
-            setattr(instance, key, value)
-        instance.save()
-
-        return instance
-
-    @classmethod
-    def get(
-        cls, pk: int, raise_exception: bool = True, allow_deleted: bool = False
-    ) -> Union["ProductsMapper", None]:
-        try:
-            mapper = ProductsMapper.objects.get(id=pk)
-            if not allow_deleted and mapper.deleted_at:
-                raise NotFound("Mapper not found")
-            return mapper
-        except ProductsMapper.DoesNotExist:
-            if raise_exception:
-                raise NotFound("Mapper not found")
-            return None
-
-    @classmethod
-    def delete(cls, pk):
-        instance = cls.get(pk)
-        instance.soft_delete()
-        return True
-
-    @classmethod
-    def restore(cls, pk):
-        instance = cls.get(pk, allow_deleted=True)
-        instance.restore()
-        return True
+    model: Model
 
     @classmethod
     def search(cls, query_params: dict, paginate=True, **kwargs):
+        assert cls.model, "Model not defined"
 
-        query_set = ProductsMapper.objects.all()
+        query_set = cls.model.objects.all()
 
         # Lấy các tham số truy vấn
         keyword = query_params.get("keyword")
@@ -97,3 +59,13 @@ class ProductsMapperService:
             return query_set, meta
 
         return query_set
+
+
+class ProductMapperService(BaseService, SearchMapperService):
+
+    model = ProductMapper
+
+
+class ProductsMapperService(BaseService, SearchMapperService):
+
+    model = ProductsMapper

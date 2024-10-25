@@ -1,11 +1,10 @@
-from typing import Union
-
-from rest_framework.exceptions import NotFound
-
+from core.services import BaseService
 from crawlers.models import RequestParams
 
 
-class RequestParamsService:
+class RequestParamsService(BaseService):
+
+    model = RequestParams
 
     @classmethod
     def create(cls, validated: dict) -> RequestParams:
@@ -22,23 +21,3 @@ class RequestParamsService:
             instance.params = params
             instance.save()
         return instance
-
-    @classmethod
-    def get(
-        cls, pk: int, raise_exception: bool = True, allow_deleted: bool = False
-    ) -> Union["RequestParams", None]:
-        try:
-            request_params = RequestParams.objects.get(id=pk)
-            if not allow_deleted and request_params.deleted_at:
-                raise NotFound("RequestParams not found")
-            return request_params
-        except RequestParams.DoesNotExist:
-            if raise_exception:
-                raise NotFound("RequestParams not found")
-            return None
-
-    @classmethod
-    def delete(cls, pk):
-        instance = cls.get(pk)
-        instance.soft_delete()
-        return True

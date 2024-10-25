@@ -5,8 +5,9 @@ from rest_framework.viewsets import ModelViewSet
 from core.permissions import IsAdminPermission
 from crawlers.serializers import (
     CrawlerSerializer,
+    DetailPeriodicTaskSerializer,
+    PeriodicTaskSerializer,
     QueryCrawlerSerializer,
-    SimpleCrawlerSerializer,
 )
 from crawlers.services import CrawlerService
 
@@ -24,7 +25,7 @@ class CrawlerViewSet(ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         instance = CrawlerService.get(kwargs.get("pk"))
-        data = CrawlerSerializer(instance).data
+        data = PeriodicTaskSerializer(instance).data
         return Response(data)
 
     def update(self, request, *args, **kwargs):
@@ -55,6 +56,6 @@ class CrawlerViewSet(ModelViewSet):
         query_params.is_valid(raise_exception=True)
         query_set, meta = CrawlerService.search(query_params.validated_data)
 
-        crawlers = SimpleCrawlerSerializer(query_set, many=True).data
+        crawlers = DetailPeriodicTaskSerializer(query_set, many=True).data
 
         return Response({"data": crawlers, **meta})

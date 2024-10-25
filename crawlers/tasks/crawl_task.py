@@ -1,44 +1,19 @@
-import re
-
 import requests
 from celery import shared_task
 
 from crawlers.models import ProductMapper
-from crawlers.services.product_mapper_service import ProductMapperService
-from crawlers.services.products_mapper_service import ProductsMapperService
+from crawlers.services.mapper_service import ProductMapperService, ProductsMapperService
 from crawlers.services.request_params_service import RequestParamsService
-from products.services import ProductService
+from crawlers.utils import (
+    get_value_by_nested_key,
+    remove_html_tags,
+    remove_tiki_text_extension,
+)
+from products.tasks import create_product_task
 
 
 class NotFoundKeyException(Exception):
     pass
-
-
-def get_value_by_nested_key(data, key, is_required=False):
-    value = data
-    if key is None:
-        if is_required:
-            raise NotFoundKeyException(f"Key {key} is required")
-        return None
-    for k in key.split("/"):
-        value = value.get(k)
-        if value is None and is_required:
-            raise NotFoundKeyException(f"Key {k} is not valid")
-    return value
-
-
-def remove_html_tags(text=None):
-    if text is None:
-        return None
-    clean = re.compile("<.*?>")
-    return re.sub(clean, "", text)
-
-
-def remove_tiki_text_extension(text=None):
-    if text is None:
-        return None
-    text = text.split("Giá sản phẩm trên Tiki đã bao gồm thuế theo luật hiện hành.")[0]
-    return text
 
 
 def extract_product_data(data, product_mapper: ProductMapper):
@@ -255,7 +230,7 @@ def crawl_task(**kwargs):
                     params,
                     kwargs.get("product_mapper_id"),
                 )
-                ProductService.create_product_in_background.delay(product)
+                create_product_task.delay(product)
                 count += 1
                 total_saved += 1
             except NotFoundKeyException:

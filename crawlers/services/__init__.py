@@ -1,4 +1,4 @@
 from .crawler_service import CrawlerService as CrawlerService
-from .product_mapper_service import ProductMapperService as ProductMapperService
-from .products_mapper_service import ProductsMapperService as ProductsMapperService
+from .mapper_service import ProductMapperService as ProductMapperService
+from .mapper_service import ProductsMapperService as ProductsMapperService
 from .request_params_service import RequestParamsService as RequestParamsService

@@ -2,10 +2,11 @@ from celery import shared_task
 from django.utils import timezone
 from elasticsearch_dsl.query import Bool, Exists, MultiMatch, Range, Term
 
+from core.services import BaseESService
 from products.document import ProductDocument
 
 
-class ESProductService:
+class ESProductService(BaseESService):
 
     @staticmethod
     @shared_task
