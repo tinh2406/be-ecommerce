@@ -6,6 +6,7 @@ from rest_framework.exceptions import NotFound
 
 from products.models import Category, Product, UserLikeProduct
 from products.serializers.simple_product_serializer import SimpleProductSerializer
+from products.services.category_sevice import CategoryService
 
 from .es_product_service import ESProductService
 from .product_attribute_service import ProductAttributeService
@@ -66,10 +67,13 @@ class ProductService:
         except Category.DoesNotExist:
             category = None
         if not category:
-            category = Category.objects.create(
-                name=validated.get("category_name"),
-                source_id=validated.get("category_id"),
+            category = CategoryService.create(
+                {
+                    "name": validated.get("category_name"),
+                    "source_id": validated.get("category_id"),
+                }
             )
+
         validated["category_id"] = category.id
         ProductService.create_product(validated)
         return True
