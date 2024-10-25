@@ -71,8 +71,21 @@ def extract_product_data(data, product_mapper: ProductMapper):
         "category_name": get_value_by_nested_key(
             data, product_mapper.product_category_name, is_required=True
         ),
-        "images": get_value_by_nested_key(data, product_mapper.product_images),
     }
+
+
+def extract_images(data, product_mapper: ProductMapper):
+    """Extracts product images based on product mapper fields."""
+    images = get_value_by_nested_key(data, product_mapper.product_images)
+
+    return [
+        (
+            get_value_by_nested_key(image, product_mapper.product_images_name)
+            if product_mapper.product_images_name
+            else image
+        )
+        for image in images
+    ]
 
 
 def extract_variants(data, product_mapper: ProductMapper, attributes):
@@ -125,6 +138,8 @@ def get_one_item(url, headers, params, product_mapper_id):
     data = response.json()
 
     product = extract_product_data(data, product_mapper)
+
+    product["images"] = extract_images(data, product_mapper)
 
     attributes = get_value_by_nested_key(
         data, product_mapper.attributes, is_required=False
