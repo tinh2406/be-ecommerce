@@ -22,6 +22,7 @@ class ProductMapper(BaseTimeModel):
     product_category_id = CharField(max_length=255)
     product_category_name = CharField(max_length=255)
     product_images = CharField(max_length=255, null=True, blank=True)
+    product_images_name = CharField(max_length=255, null=True, blank=True)
 
     attributes = CharField(max_length=255, null=True, blank=True)
     attribute_code = CharField(max_length=255, null=True, blank=True)
