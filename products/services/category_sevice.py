@@ -14,8 +14,11 @@ class CategoryService:
     def create(cls, validated, **kwargs) -> Category:
         name = validated.get("name")
         parent_id = validated.get("parent_id")
+        source_id = validated.get("source_id")
 
-        category = Category.objects.create(name=name, parent_id=parent_id)
+        category = Category.objects.create(
+            name=name, source_id=source_id, parent_id=parent_id
+        )
 
         serializer = SimpleCategorySerializer(category)
         ESCategoryService.index.delay(serializer.data)

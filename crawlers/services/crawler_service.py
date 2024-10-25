@@ -17,7 +17,6 @@ class CrawlerService:
         start_time = validated.get("start_time")
         end_time = validated.get("end_time")
         cycle_length = validated.get("cycle_length")
-        request_params_id = validated.get("request_params_id")
         products_mapper_id = validated.get("products_mapper_id")
         product_mapper_id = validated.get("product_mapper_id")
 

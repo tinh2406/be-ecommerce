@@ -34,7 +34,7 @@ def remove_html_tags(text=None):
     return re.sub(clean, "", text)
 
 
-def remove_tike_text_extension(text=None):
+def remove_tiki_text_extension(text=None):
     if text is None:
         return None
     text = text.split("Giá sản phẩm trên Tiki đã bao gồm thuế theo luật hiện hành.")[0]
@@ -50,7 +50,7 @@ def extract_product_data(data, product_mapper: ProductMapper):
         "name": get_value_by_nested_key(
             data, product_mapper.product_name, is_required=True
         ),
-        "description": remove_tike_text_extension(
+        "description": remove_tiki_text_extension(
             remove_html_tags(
                 get_value_by_nested_key(data, product_mapper.product_description)
             )
