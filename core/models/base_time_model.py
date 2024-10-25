@@ -17,7 +17,6 @@ class BaseTimeModel(models.Model):
 
     def save(
         self,
-        *args,
         force_insert=False,
         force_update=False,
         using=None,
@@ -27,13 +26,21 @@ class BaseTimeModel(models.Model):
         self.updated_at = timezone.now()
         for field in self.cache_key_fields:
             cache.delete(f"{self.key}{getattr(self, field)}")
-        return super().save(*args, force_insert, force_update, using, update_fields)
+        return super().save(force_insert, force_update, using, update_fields)
 
     def delete(self, using=None, keep_parents=False):
         assert self.key is not None, "Key is required"
         for field in self.cache_key_fields:
             cache.delete(f"{self.key}{getattr(self, field)}")
         return super().delete(using, keep_parents)
+
+    def soft_delete(self):
+        self.deleted_at = timezone.now()
+        return self.save()
+
+    def restore(self):
+        self.deleted_at = None
+        return self.save()
 
     class Meta:
         abstract = True

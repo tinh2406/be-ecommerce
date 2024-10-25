@@ -25,7 +25,7 @@ class ESProductService:
 
     @staticmethod
     @shared_task
-    def delete(pk):
+    def soft_delete(pk):
         product_doc = ProductDocument.get(id=str(pk))
         product_doc.update(deleted_at=timezone.now())
 

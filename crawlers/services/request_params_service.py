@@ -40,5 +40,5 @@ class RequestParamsService:
     @classmethod
     def delete(cls, pk):
         instance = cls.get(pk)
-        instance.delete()
+        instance.soft_delete()
         return True

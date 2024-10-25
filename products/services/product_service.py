@@ -1,7 +1,6 @@
 from typing import Union
 
 from celery import shared_task
-from django.utils import timezone
 from rest_framework.exceptions import NotFound
 
 from products.models import Category, Product, UserLikeProduct
@@ -127,18 +126,14 @@ class ProductService:
     @classmethod
     def delete(cls, pk):
         instance = cls.get(pk, use_cache=False)
-
-        instance.deleted_at = timezone.now()
-        instance.save()
-
+        instance.soft_delete()
         ESProductService.delete.delay(str(pk))
         return True
 
     @classmethod
     def restore(cls, pk):
         instance = cls.get(pk, allow_deleted=True)
-        instance.deleted_at = None
-        instance.save()
+        instance.restore()
         ESProductService.restore.delay(str(pk))
         return True
 

@@ -83,7 +83,7 @@ class CrawlerSerializer(Serializer):
         if int(attrs.get("quantity") or 10) < 0:
             raise ValidationError({"quantity": "quantity must be greater than 0"})
 
-        params = attrs.get("params")
+        params = attrs["params"]
         take_key = params.get("take_key")
         page_key = params.get("page_key")
         if not take_key:
