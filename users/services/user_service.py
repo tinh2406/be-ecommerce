@@ -150,9 +150,8 @@ class UserService:
         instance = cls.get(pk, allow_banned=True, raise_exception=True)
         if not instance:
             return False
-        instance.deleted_at = timezone.now()
-        instance.save()
-        ESUserService.delete.delay(str(pk))
+        instance.soft_delete()
+        ESUserService.soft_delete.delay(str(pk))
 
         return True
 
@@ -162,8 +161,7 @@ class UserService:
         if not instance:
             return False
 
-        instance.deleted_at = None
-        instance.save()
+        instance.restore()
         ESUserService.restore.delay(str(pk))
 
         return True

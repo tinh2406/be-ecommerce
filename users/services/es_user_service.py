@@ -39,7 +39,7 @@ class ESUserService:
 
     @staticmethod
     @shared_task
-    def delete(pk):
+    def soft_delete(pk):
         user_doc = UserDocument.get(id=pk)
         user_doc.update(deleted_at=timezone.now())
 

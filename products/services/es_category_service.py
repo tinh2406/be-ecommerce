@@ -33,7 +33,7 @@ class ESCategoryService:
 
     @staticmethod
     @shared_task
-    def delete(pk):
+    def soft_delete(pk):
         cate_doc = CategoryDocument.get(id=str(pk))
         return cate_doc.update(deleted_at=timezone.now())
 

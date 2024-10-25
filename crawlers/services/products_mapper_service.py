@@ -1,6 +1,5 @@
 from typing import Union
 
-from django.utils import timezone
 from rest_framework.exceptions import NotFound
 
 from crawlers.models import ProductsMapper
@@ -39,15 +38,13 @@ class ProductsMapperService:
     @classmethod
     def delete(cls, pk):
         instance = cls.get(pk)
-        instance.deleted_at = timezone.now()
-        instance.save()
+        instance.soft_delete()
         return True
 
     @classmethod
     def restore(cls, pk):
         instance = cls.get(pk, allow_deleted=True)
-        instance.deleted_at = None
-        instance.save()
+        instance.restore()
         return True
 
     @classmethod

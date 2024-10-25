@@ -1,6 +1,5 @@
 from typing import Union
 
-from django.utils import timezone
 from rest_framework.exceptions import NotFound
 
 from products.models import Category
@@ -62,15 +61,13 @@ class CategoryService:
     @classmethod
     def delete(cls, pk):
         instance = cls.get(pk)
-        instance.deleted_at = timezone.now()
-        instance.save()
-        ESCategoryService.delete.delay(str(pk))
+        instance.soft_delete()
+        ESCategoryService.soft_delete.delay(str(pk))
         return True
 
     @classmethod
     def restore(cls, pk):
         instance = cls.get(pk, allow_deleted=True)
-        instance.deleted_at = None
-        instance.save()
+        instance.restore()
         ESCategoryService.restore.delay(pk)
         return True
