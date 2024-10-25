@@ -25,14 +25,14 @@ class CrawlerViewSet(ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         instance = CrawlerService.get(kwargs.get("pk"))
-        data = PeriodicTaskSerializer(instance).data
+        data = DetailPeriodicTaskSerializer(instance).data
         return Response(data)
 
     def update(self, request, *args, **kwargs):
         instance = CrawlerService.get(kwargs.get("pk"))
         data = CrawlerSerializer(instance, data=request.data)
         data.is_valid(raise_exception=True)
-
+        CrawlerService.update(instance, data.validated_data)
         crawler_id = data.save()
         return Response({"data": crawler_id})
 
@@ -56,6 +56,6 @@ class CrawlerViewSet(ModelViewSet):
         query_params.is_valid(raise_exception=True)
         query_set, meta = CrawlerService.search(query_params.validated_data)
 
-        crawlers = DetailPeriodicTaskSerializer(query_set, many=True).data
+        crawlers = PeriodicTaskSerializer(query_set, many=True).data
 
         return Response({"data": crawlers, **meta})

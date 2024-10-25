@@ -19,22 +19,28 @@ from crawlers.services import CrawlerService, RequestParamsService
 from crawlers.tasks.crawl_task import test_crawl_config
 
 
-class ParamsSerializer(Serializer):
-    take_key = CharField(max_length=255)
-    page_key = CharField(max_length=255)
-    total_saved = IntegerField(allow_null=True, required=False)
+def validate_params(data: dict):
+    if not data.get("take_key"):
+        raise ValidationError({"take_key": "This field is required."})
+    if not data.get("page_key"):
+        raise ValidationError({"page_key": "This field is required."})
 
-    other_params = DictField()
+    take_key = data["take_key"]
+    page_key = data["page_key"]
+    if not data.get(take_key):
+        raise ValidationError({take_key: "This field is required."})
+    if not data.get(page_key):
+        raise ValidationError({page_key: "This field is required."})
 
-    def validate(self, attrs: dict):
-        take_key = attrs["take_key"]
-        page_key = attrs["page_key"]
-        other_params = attrs["other_params"]
-        if other_params.get(take_key) is None:
-            raise ValidationError({take_key: f"{take_key} is required"})
-        if other_params.get(page_key) is None:
-            raise ValidationError({page_key: f"{page_key} is required"})
-        return attrs
+    take = data[take_key]
+    page = data[page_key]
+
+    if not isinstance(take, int) or take < 1 or take > 100:
+        data[take_key] = 10
+    if not isinstance(page, int) or page < 1:
+        data[page_key] = 1
+
+    return data
 
 
 class CrawlerSerializer(Serializer):
@@ -50,13 +56,14 @@ class CrawlerSerializer(Serializer):
     products_mapper_id = CharField(max_length=255)
 
     headers = DictField()
-    params = ParamsSerializer()
+    params = DictField()
 
     def validate(self, attrs: dict):
-        if str(attrs.get("start_time")) > str(attrs.get("end_time")):
+        if attrs["start_time"] > attrs["end_time"]:
             raise ValidationError(
                 {"end_time": "end_time must be greater than start_time"}
             )
+        attrs["params"] = validate_params(attrs["params"])
 
         try:
             test_crawl_config(**attrs)
@@ -68,13 +75,6 @@ class CrawlerSerializer(Serializer):
     def create(self, validated_data):
         try:
             crawler = CrawlerService.create(validated_data)
-            return crawler.id
-        except Exception as e:
-            raise ValidationError(e)
-
-    def update(self, instance, validated_data):
-        try:
-            crawler = CrawlerService.update(instance, validated_data)
             return crawler.id
         except Exception as e:
             raise ValidationError(e)

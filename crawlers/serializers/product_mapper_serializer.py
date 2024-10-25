@@ -19,19 +19,19 @@ class ProductMapperSerializer(ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at"]
 
     def validate(self, attrs):
-        if attrs.get("attributes") and attrs.get("variants"):
-            if not all(
-                [
-                    attrs.get("attribute_name"),
-                    attrs.get("attribute_code"),
-                    attrs.get("attribute_values"),
-                    attrs.get("variant_price"),
-                    attrs.get("variant_image"),
-                ]
-            ):
-                raise ValidationError(
-                    "Missing required fields for attributes or variants"
-                )
+
+        fields = [
+            "attribute_name",
+            "attribute_code",
+            "attribute_values",
+            "variant_price",
+            "variant_image",
+        ]
+
+        missing_fields = [field for field in fields if not attrs.get(field)]
+
+        if attrs.get("attributes") and attrs.get("variants") and missing_fields:
+            raise ValidationError("Missing required fields for attributes or variants")
         return attrs
 
     def create(self, validated_data):
