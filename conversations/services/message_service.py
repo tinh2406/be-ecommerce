@@ -1,8 +1,12 @@
 from conversations.models import Message
 from conversations.services.conversation_service import ConversationService
+from core.services import BaseService
 
 
-class MessageService:
+class MessageService(BaseService):
+
+    model = Message
+
     @classmethod
     def create(cls, **kwargs):
         conversation_id = kwargs.pop("conversation_id", None)
@@ -22,3 +26,12 @@ class MessageService:
         conversation.last_message = message
         conversation.save()
         return message
+
+    @classmethod
+    def update(cls, instance: Message, validated: dict):
+        last_message = instance.conversation.last_message
+        if last_message.id == instance.id:
+            instance.content = validated.get("content")
+            instance.type = validated.get("type")
+            instance.save()
+        return instance

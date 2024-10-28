@@ -22,3 +22,24 @@ class MessageViewSet(ModelViewSet):
 
         message = MessageService.create(**serializer.validated_data, user_id=user_id)
         return Response(MessageSerializer(message).data)
+
+    def update(self, request, *args, **kwargs):
+        message = MessageService.get(kwargs.get("pk"))
+
+        if message.sender_id != request.user.id:
+            return Response(
+                {"detail": "You are not allowed to update this message"},
+                status=403,
+            )
+
+        serializer = MessageSerializer(message, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated_data = serializer.validated_data
+
+        if request.user.role == Roles.CUSTOMER:
+            validated_data.pop("type", None)
+            validated_data.pop("is_bot", None)
+
+        message = MessageService.update(message, serializer.validated_data)
+
+        return Response(MessageSerializer(message).data)
