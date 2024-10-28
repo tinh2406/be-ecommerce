@@ -15,6 +15,7 @@ class CrawlerService:
 
         name = validated.get("name")
         url = validated.get("url")
+        detail_url = validated.get("detail_url")
         quantity = validated.get("quantity")
         start_time = validated.get("start_time")
         end_time = validated.get("end_time")
@@ -36,6 +37,7 @@ class CrawlerService:
             kwargs=json.dumps(
                 {
                     "url": url,
+                    "detail_url": detail_url,
                     "quantity": quantity,
                     "request_params_id": request_params_id,
                     "product_mapper_id": product_mapper_id,

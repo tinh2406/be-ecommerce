@@ -55,6 +55,7 @@ class CrawlerSerializer(Serializer):
 
     name = CharField(max_length=255)
     url = CharField(max_length=255)
+    detail_url = CharField(max_length=255)
     quantity = IntegerField(min_value=1)
     start_time = DateTimeField()
     end_time = DateTimeField()
@@ -83,7 +84,7 @@ class CrawlerSerializer(Serializer):
         try:
             test_crawl_config(**attrs)
         except Exception as e:
-            raise ValidationError(e)
+            raise ValidationError({"test_crawl_config": str(e)})
 
         return attrs
 
