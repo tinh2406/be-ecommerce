@@ -1,5 +1,9 @@
 import re
 
+from django_celery_beat.models import CrontabSchedule, IntervalSchedule
+
+from crawlers.constants import ScheduleChoice
+
 
 class NotFoundKeyException(Exception):
     pass
@@ -30,3 +34,47 @@ def remove_tiki_text_extension(text=None):
         return None
     text = text.split("Giá sản phẩm trên Tiki đã bao gồm thuế theo luật hiện hành.")[0]
     return text
+
+
+def periodic_task_cron_builder(every, cycle_length, start_time):
+    if cycle_length:
+        schedule, _ = IntervalSchedule.objects.get_or_create(
+            every=cycle_length,
+            period=IntervalSchedule.MINUTES,
+        )
+        return {
+            "interval": schedule,
+        }
+    if every == ScheduleChoice.MINUTE:
+        schedule, _ = CrontabSchedule.objects.get_or_create(
+            minute="*/1",
+        )
+    elif every == ScheduleChoice.HOUR:
+        schedule, _ = CrontabSchedule.objects.get_or_create(
+            hour="*/1",
+            minute=f"{start_time.minute}",
+        )
+    elif every == ScheduleChoice.DAY:
+        schedule, _ = CrontabSchedule.objects.get_or_create(
+            day_of_month="*/1",
+            hour=f"{start_time.hour}",
+            minute=f"{start_time.minute}",
+        )
+    elif every == ScheduleChoice.MONTH:
+        schedule, _ = CrontabSchedule.objects.get_or_create(
+            month_of_year="*/1",
+            day_of_month=f"{start_time.day}",
+            hour=f"{start_time.hour}",
+            minute=f"{start_time.minute}",
+        )
+    else:
+        schedule, _ = CrontabSchedule.objects.get_or_create(
+            month_of_year=f"{start_time.month}",
+            day_of_month=f"{start_time.day}",
+            hour=f"{start_time.hour}",
+            minute=f"{start_time.minute}",
+        )
+
+    return {
+        "crontab": schedule,
+    }

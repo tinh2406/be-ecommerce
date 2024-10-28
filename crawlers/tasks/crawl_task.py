@@ -179,8 +179,12 @@ def test_crawl_config(**kwargs):
         ),
     }
 
+    detail_url = kwargs.get("detail_url")
     get_one_item(
-        f'{url}/{products_response["primary_key"]}', headers, params, product_mapper_id
+        f'{detail_url}/{products_response["primary_key"]}',
+        headers,
+        params,
+        product_mapper_id,
     )
 
     return True
@@ -191,6 +195,8 @@ def crawl_task(**kwargs):
     url = kwargs.get("url")
     quantity = kwargs.get("quantity")
     request_params_id = kwargs.get("request_params_id")
+    detail_url = kwargs.get("detail_url")
+
     request_properties = RequestParamsService.get(request_params_id)
     headers = request_properties.headers or {}
     params = request_properties.params or {}
@@ -225,7 +231,7 @@ def crawl_task(**kwargs):
             try:
                 product_id = item.get(products_mapper.primary_key)
                 product = get_one_item(
-                    f"{url}/{product_id}",
+                    f"{detail_url}/{product_id}",
                     headers,
                     params,
                     kwargs.get("product_mapper_id"),

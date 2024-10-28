@@ -1,55 +1,11 @@
 import json
 from typing import Union
 
-from django_celery_beat.models import CrontabSchedule, IntervalSchedule, PeriodicTask
+from django_celery_beat.models import PeriodicTask
 from rest_framework.exceptions import NotFound
 
-from crawlers.constants import ScheduleChoice
 from crawlers.services.request_params_service import RequestParamsService
-
-
-def periodic_task_cron(every, cycle_length, start_time):
-    if cycle_length:
-        schedule, _ = IntervalSchedule.objects.get_or_create(
-            every=cycle_length,
-            period=IntervalSchedule.MINUTES,
-        )
-        return {
-            "interval": schedule,
-        }
-    if every == ScheduleChoice.MINUTE:
-        schedule, _ = CrontabSchedule.objects.get_or_create(
-            minute="*/1",
-        )
-    elif every == ScheduleChoice.HOUR:
-        schedule, _ = CrontabSchedule.objects.get_or_create(
-            hour="*/1",
-            minute=f"{start_time.minute}",
-        )
-    elif every == ScheduleChoice.DAY:
-        schedule, _ = CrontabSchedule.objects.get_or_create(
-            day_of_month="*/1",
-            hour=f"{start_time.hour}",
-            minute=f"{start_time.minute}",
-        )
-    elif every == ScheduleChoice.MONTH:
-        schedule, _ = CrontabSchedule.objects.get_or_create(
-            month_of_year="*/1",
-            day_of_month=f"{start_time.day}",
-            hour=f"{start_time.hour}",
-            minute=f"{start_time.minute}",
-        )
-    else:
-        schedule, _ = CrontabSchedule.objects.get_or_create(
-            month_of_year=f"{start_time.month}",
-            day_of_month=f"{start_time.day}",
-            hour=f"{start_time.hour}",
-            minute=f"{start_time.minute}",
-        )
-
-    return {
-        "crontab": schedule,
-    }
+from crawlers.utils import periodic_task_cron_builder
 
 
 class CrawlerService:
@@ -59,6 +15,7 @@ class CrawlerService:
 
         name = validated.get("name")
         url = validated.get("url")
+        detail_url = validated.get("detail_url")
         quantity = validated.get("quantity")
         start_time = validated.get("start_time")
         end_time = validated.get("end_time")
@@ -67,7 +24,7 @@ class CrawlerService:
         products_mapper_id = validated.get("products_mapper_id")
         product_mapper_id = validated.get("product_mapper_id")
 
-        schedule = periodic_task_cron(every, cycle_length, start_time)
+        schedule = periodic_task_cron_builder(every, cycle_length, start_time)
 
         request_params = RequestParamsService.create(validated)
         request_params_id = str(request_params.id)
@@ -80,6 +37,7 @@ class CrawlerService:
             kwargs=json.dumps(
                 {
                     "url": url,
+                    "detail_url": detail_url,
                     "quantity": quantity,
                     "request_params_id": request_params_id,
                     "product_mapper_id": product_mapper_id,
@@ -105,13 +63,22 @@ class CrawlerService:
     @classmethod
     def update(cls, instance: PeriodicTask, validated: dict) -> PeriodicTask:
 
-        schedule, _ = CrontabSchedule.objects.get_or_create(
-            minute={validated.get("cycle_length")},
-        )
-        instance.crontab = schedule
+        start_time = validated.get("start_time")
+        end_time = validated.get("end_time")
+        cycle_length = validated.get("cycle_length")
+        every = validated.get("every")
+        schedule = periodic_task_cron_builder(every, cycle_length, start_time)
+
+        instance.crontab = schedule.get("crontab")
+        instance.interval = schedule.get("interval")
         instance.name = validated.get("name")
-        instance.expires = validated.get("end_time")
-        instance.start_time = validated.get("start_time")
+        instance.expires = end_time
+        instance.start_time = start_time
+
+        kwargs = json.loads(instance.kwargs)
+        kwargs["quantity"] = validated.get("quantity")
+        instance.kwargs = json.dumps(kwargs)
+
         instance.save()
         return instance
 
