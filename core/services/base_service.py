@@ -9,7 +9,7 @@ from core.services.base_es_service import BaseESService
 class BaseService:
 
     model: Type[BaseTimeModel]
-    es_service: Type[BaseESService] = None
+    es_service: Type[BaseESService] | None = None
 
     @classmethod
     def create(cls, validated: dict):

@@ -1,6 +1,6 @@
 from celery import shared_task
 from django.utils import timezone
-from elasticsearch_dsl.query import Bool, Exists, MultiMatch, Range, Term
+from elasticsearch_dsl.query import Bool, Exists, MultiMatch, Range
 
 from core.services import BaseESService
 from products.document import ProductDocument
@@ -77,12 +77,12 @@ class ESProductService(BaseESService):
             search = search.query(
                 MultiMatch(
                     query=keyword,
-                    fields=["name", "description"],
+                    fields=["name"],
                     fuzziness="AUTO",
                 )
             )
         if category_id:
-            search = search.query(Term(category_id=category_id))
+            search = search.query({"term": {"category_id.keyword": category_id}})
         if created_from:
             search = search.query(Range(created_at={"gte": created_from}))
         if created_to:

@@ -9,4 +9,4 @@ class IsStaffPermission(BasePermission):
     """
 
     def has_permission(self, request, view):
-        return bool(request.user and request.user.role < Roles.CUSTOMER)
+        return bool(request.user and request.user.role in [Roles.ADMIN, Roles.STAFF])

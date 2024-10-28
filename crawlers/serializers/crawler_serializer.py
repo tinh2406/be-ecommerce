@@ -19,28 +19,36 @@ from crawlers.services import CrawlerService, RequestParamsService
 from crawlers.tasks.crawl_task import test_crawl_config
 
 
-def validate_params(data: dict):
-    if not data.get("take_key"):
-        raise ValidationError({"take_key": "This field is required."})
-    if not data.get("page_key"):
-        raise ValidationError({"page_key": "This field is required."})
+class ParamsSerializer(Serializer):
+    take_key = CharField(max_length=255)
+    page_key = CharField(max_length=255)
 
-    take_key = data["take_key"]
-    page_key = data["page_key"]
-    if not data.get(take_key):
-        raise ValidationError({take_key: "This field is required."})
-    if not data.get(page_key):
-        raise ValidationError({page_key: "This field is required."})
+    def to_internal_value(self, data):
+        ret = super().to_internal_value(data)
+        return {**data, **ret}
 
-    take = data[take_key]
-    page = data[page_key]
+    def validate(self, attrs: dict):
 
-    if not isinstance(take, int) or take < 1 or take > 100:
-        data[take_key] = 10
-    if not isinstance(page, int) or page < 1:
-        data[page_key] = 1
+        take_key = attrs["take_key"]
+        page_key = attrs["page_key"]
+        if not attrs.get(take_key):
+            raise ValidationError({take_key: "This field is required."})
+        if not attrs.get(page_key):
+            raise ValidationError({page_key: "This field is required."})
 
-    return data
+        take = attrs[take_key]
+        page = attrs[page_key]
+
+        if not isinstance(take, int) or take < 1 or take > 100:
+            raise ValidationError(
+                {take_key: "This field must be an integer between 1 and 100."}
+            )
+        if not isinstance(page, int) or page < 1:
+            raise ValidationError(
+                {page_key: "This field must be an integer greater than 0."}
+            )
+
+        return attrs
 
 
 class CrawlerSerializer(Serializer):
@@ -57,14 +65,13 @@ class CrawlerSerializer(Serializer):
     products_mapper_id = CharField(max_length=255)
 
     headers = DictField()
-    params = DictField()
+    params = ParamsSerializer()
 
     def validate(self, attrs: dict):
         if attrs["start_time"] > attrs["end_time"]:
             raise ValidationError(
                 {"end_time": "end_time must be greater than start_time"}
             )
-        attrs["params"] = validate_params(attrs["params"])
 
         if attrs.get("cycle_length") and attrs.get("every"):
             raise ValidationError(

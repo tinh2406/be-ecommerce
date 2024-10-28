@@ -1,4 +1,4 @@
-import requests
+import requests  # type: ignore
 from celery import shared_task
 
 from crawlers.models import ProductMapper

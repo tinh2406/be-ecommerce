@@ -12,8 +12,7 @@ from products.services.es_product_service import ESProductService
 
 class ProductViewSet(ModelViewSet):
 
-    # permission_classes = []
-    # authentication_classes = []
+    permission_classes: list[object] = []
 
     def create(self, request, *args, **kwargs):
         Permission.check_admin_permission(request)

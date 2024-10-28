@@ -14,6 +14,9 @@ def periodic_task_cron(every, cycle_length, start_time):
             every=cycle_length,
             period=IntervalSchedule.MINUTES,
         )
+        return {
+            "interval": schedule,
+        }
     if every == ScheduleChoice.MINUTE:
         schedule, _ = CrontabSchedule.objects.get_or_create(
             minute="*/1",
@@ -43,7 +46,10 @@ def periodic_task_cron(every, cycle_length, start_time):
             hour=f"{start_time.hour}",
             minute=f"{start_time.minute}",
         )
-    return schedule
+
+    return {
+        "crontab": schedule,
+    }
 
 
 class CrawlerService:
@@ -67,7 +73,7 @@ class CrawlerService:
         request_params_id = str(request_params.id)
 
         task = PeriodicTask.objects.create(
-            crontab=schedule,
+            **schedule,
             name=name,
             enabled=False,
             task="crawl_task",

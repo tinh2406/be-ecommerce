@@ -21,7 +21,7 @@ class AddressViewSet(ModelViewSet):
         user = request.user
         pk = kwargs.get("pk")
 
-        if user.role < Roles.CUSTOMER:
+        if user.role in [Roles.ADMIN, Roles.STAFF]:
             address = AddressService.get(pk)
         else:
             address = AddressService.get(pk, user_id=user.id)
@@ -31,7 +31,7 @@ class AddressViewSet(ModelViewSet):
     def list(self, request, *args, **kwargs):
         user = request.user
 
-        if user.role < Roles.CUSTOMER:
+        if user.role in [Roles.ADMIN, Roles.STAFF]:
             queryset = AddressService.list(**request.query_params)
         else:
             queryset = AddressService.list(user_id=user.id)

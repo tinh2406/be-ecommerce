@@ -103,7 +103,7 @@ MIDDLEWARE = [
 ]
 
 # Config django-cors lib
-CORS_ORIGIN_ALLOW_ALL = env.bool("CORS_ORIGIN_ALLOW_ALL", default=False)
+CORS_ORIGIN_ALLOW_ALL = env.bool("CORS_ORIGIN_ALLOW_ALL", default=True)
 CORS_ORIGIN_WHITELIST = env.list(
     "CORS_ORIGIN_WHITELIST",
     default=[
@@ -111,6 +111,7 @@ CORS_ORIGIN_WHITELIST = env.list(
         "http://localhost:8001",
         "http://localhost:8080",
         "http://127.0.0.1:8080",
+        "http://0.0.0.0.0:8000",
     ],
 )
 CORS_ORIGIN_REGEX_WHITELIST = env.list("CORS_ORIGIN_WHITELIST", default=[])
@@ -187,6 +188,8 @@ def mongo_config(prefix="", test=None):
         "NAME": env("MONGO_DATABASE"),
         "CLIENT": {
             "host": env("MONGO_HOST"),
+            "username": env("MONGO_USERNAME"),
+            "password": env("MONGO_PASSWORD"),
         },
     }
 
@@ -228,3 +231,11 @@ USE_TZ = True
 
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 STATIC_URL = "/static/"
+
+ALLOWED_HOSTS = [
+    "192.168.x.x",
+    "localhost",
+    "0.0.0.0",
+    "192.168.61.30",
+    "192.168.27.30",
+]
