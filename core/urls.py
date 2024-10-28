@@ -8,4 +8,5 @@ urlpatterns = [
     path("api/v1/", include("users.urls")),
     path("api/v1/", include("products.urls")),
     path("api/v1/", include("crawlers.urls")),
+    path("api/v1/", include("conversations.urls")),
 ] + static(settings.STATIC_URL)
