@@ -23,8 +23,7 @@ class MessageService(BaseService):
         message = Message.objects.create(
             **kwargs, sender_id=sender_id, conversation_id=conversation.id
         )
-        conversation.last_message = message
-        conversation.save()
+        ConversationService.update(conversation, {"last_message_id": message.id})
         return message
 
     @classmethod
