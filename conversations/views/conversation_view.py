@@ -2,8 +2,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from conversations.serializers import ConversationSerializer
-from conversations.serializers.conversation_serializer import (
+from conversations.serializers import (
+    ConversationSerializer,
     QueryConversationSerializer,
 )
 from conversations.services import ConversationService, ESConversationService
