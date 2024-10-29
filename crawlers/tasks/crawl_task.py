@@ -5,15 +5,12 @@ from crawlers.models import ProductMapper
 from crawlers.services.mapper_service import ProductMapperService, ProductsMapperService
 from crawlers.services.request_params_service import RequestParamsService
 from crawlers.utils import (
+    NotFoundKeyException,
     get_value_by_nested_key,
     remove_html_tags,
     remove_tiki_text_extension,
 )
 from products.tasks import create_product_task
-
-
-class NotFoundKeyException(Exception):
-    pass
 
 
 def extract_product_data(data, product_mapper: ProductMapper):
