@@ -4,7 +4,6 @@ from core.services import BaseService
 
 
 class MessageService(BaseService):
-
     model = Message
 
     @classmethod
@@ -34,3 +33,33 @@ class MessageService(BaseService):
             instance.type = validated.get("type")
             instance.save()
         return instance
+
+    @classmethod
+    def search(cls, query_params: dict, paginate=True, **kwargs):
+        query_set = Message.objects.all()
+
+        conversation_id = query_params.get("conversation_id")
+        keyword = query_params.get("keyword")
+        page_size = query_params.get("page_size") or 10
+        page = query_params.get("page") or 1
+        skip = page_size * (page - 1)
+
+        query_set = query_set.filter(conversation_id=conversation_id)
+
+        if keyword:
+            query_set = query_set.filter(content__icontains=keyword)
+
+        query_set = query_set.order_by("-created_at")
+
+        if paginate:
+            count = query_set.count()
+            meta = {
+                "item_count": count,
+                "page": page,
+                "page_size": page_size,
+                "page_count": count // page_size + 1,
+            }
+            query_set = query_set[skip : skip + page_size]
+            return query_set, meta
+
+        return query_set

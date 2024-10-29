@@ -1,7 +1,7 @@
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from conversations.serializers import MessageSerializer
+from conversations.serializers import MessageSerializer, QueryMessageSerializer
 from conversations.services import MessageService
 from users.constants import Roles
 
@@ -43,3 +43,11 @@ class MessageViewSet(ModelViewSet):
         message = MessageService.update(message, serializer.validated_data)
 
         return Response(MessageSerializer(message).data)
+
+    def list(self, request, *args, **kwargs):
+        serializer = QueryMessageSerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        data, meta = MessageService.search(serializer.validated_data, paginate=True)
+
+        messages = MessageSerializer(data, many=True).data
+        return Response({**meta, "data": messages})
