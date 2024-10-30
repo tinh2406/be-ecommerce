@@ -86,7 +86,7 @@ THIRD_PARTY_APPS = (
     "django_nose",
     "djongo",
 )
-LOCAL_APPS = ("users", "products", "crawlers", "conversations")
+LOCAL_APPS = ("users", "products", "crawlers", "conversations", "chatbot")
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 AUTH_USER_MODEL = "users.User"
@@ -238,4 +238,7 @@ ALLOWED_HOSTS = [
     "0.0.0.0",
     "192.168.61.30",
     "192.168.27.30",
+    "127.0.0.1"
 ]
+
+GPT_TOKEN=env("GIT_KEY")
