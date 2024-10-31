@@ -2,23 +2,22 @@ from typing import Type
 
 from rest_framework.exceptions import NotFound
 
-from core.models import BaseTimeModel
+from core.managers import BaseTimeManager
 from core.services.base_es_service import BaseESService
 
 
 class BaseService:
 
-    model: Type[BaseTimeModel]
+    manager: Type[BaseTimeManager]
     es_service: Type[BaseESService] | None = None
 
     @classmethod
     def create(cls, validated: dict):
-        obj = cls.model.objects.create(**validated)
+        obj = cls.manager.create(**validated)
         return obj
 
     @classmethod
     def update(cls, instance, validated: dict):
-
         for key, value in validated.items():
             setattr(instance, key, value)
         instance.save()
@@ -27,13 +26,13 @@ class BaseService:
 
     @classmethod
     def get(cls, pk, raise_exception=True, **kwargs):
-        assert cls.model, "Model not defined"
+        assert cls.manager, "Model not defined"
 
         try:
-            object = cls.model.objects.get(id=pk)
+            object = cls.manager.get(id=pk)
             if object:
                 return object
-        except cls.model.DoesNotExist:
+        except Exception:
             pass
         if raise_exception:
             raise NotFound("Object not found")
@@ -41,6 +40,8 @@ class BaseService:
 
     @classmethod
     def delete(cls, pk):
+        assert cls.manager, "Manager not defined"
+
         instance = cls.get(pk)
         instance.soft_delete()
 
@@ -50,7 +51,9 @@ class BaseService:
 
     @classmethod
     def restore(cls, pk):
-        instance = cls.model.objects.get_with_allow_deleted(id=pk)
+        assert cls.manager, "Manager not defined"
+
+        instance = cls.manager.get_with_allow_deleted(id=pk)
         instance.restore()
 
         if cls.es_service:

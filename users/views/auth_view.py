@@ -27,7 +27,7 @@ class AuthViewSet(ViewSet):
     def login(self, request: Request):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        res = serializer.save()
+        res = UserService.login(**serializer.validated_data)
         return Response(res)
 
     @action(methods=["POST"], detail=False)

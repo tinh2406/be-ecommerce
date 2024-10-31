@@ -9,7 +9,7 @@ from .es_category_service import ESCategoryService
 
 class CategoryService(BaseService):
 
-    model = Category
+    manager = Category.objects
     es_service = ESCategoryService
 
     @classmethod

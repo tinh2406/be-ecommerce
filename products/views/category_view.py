@@ -10,7 +10,7 @@ from products.services import CategoryService, ESCategoryService
 
 class CategoryViewSet(ModelViewSet):
 
-    authentication_classes: list[object] = []
+    permission_classes: list[object] = []
 
     def create(self, request, *args, **kwargs):
         Permission.check_admin_permission(request)

@@ -1,7 +1,6 @@
 from typing import Union
 
 from django.core.exceptions import PermissionDenied
-from django.db import transaction
 from django.template.loader import render_to_string
 from django.utils import timezone
 from rest_framework.exceptions import NotFound
@@ -11,27 +10,14 @@ from users.constants import Roles
 from users.models import User
 from users.services.es_user_service import ESUserService
 from users.services.jwt_service import JWTService
-from users.services.profile_service import ProfileService
 from users.tasks import send_email_task
 from users.utils.simple_user_serializer import SimpleUserSerializer
 
 
 class UserService(BaseService):
 
-    model = User
+    manager = User.objects
     es_service = ESUserService
-
-    @classmethod
-    def create(cls, validated, **kwargs) -> User:
-        email = validated.get("email")
-        password = validated.get("password")
-        name = validated.get("name")
-        with transaction.atomic():
-            user = User.objects.create_user(email=email, password=password, name=name)
-            ProfileService.create(user=user)
-
-        cls.save_es(user)
-        return user
 
     @classmethod
     def get_by_email(
@@ -71,6 +57,14 @@ class UserService(BaseService):
         }
 
     @classmethod
+    def request_token(cls, email, **kwargs) -> str:
+        cls.get_by_email(email)
+        token = JWTService.create_verify_token(email)
+        content = render_to_string("../templates/reset_password.html", {"token": token})
+        send_email_task.delay([email], "Reset password", content)
+        return token
+
+    @classmethod
     def update(cls, instance: User, validated: dict, partial=False, **kwargs) -> User:
         if partial:
             instance.name = validated.get("name", instance.name)
@@ -80,14 +74,6 @@ class UserService(BaseService):
         instance.save()
         cls.save_es(instance)
         return instance
-
-    @classmethod
-    def request_token(cls, email, **kwargs) -> str:
-        cls.get_by_email(email)
-        token = JWTService.create_verify_token(email)
-        content = render_to_string("../templates/reset_password.html", {"token": token})
-        send_email_task.delay([email], "Reset password", content)
-        return token
 
     @classmethod
     def update_email(cls, validated_data, **kwargs) -> bool:
@@ -102,19 +88,6 @@ class UserService(BaseService):
             cls.save_es(instance)
             return True
         return False
-
-    @classmethod
-    def update_password(cls, instance: User, validated_data: dict, **kwargs) -> bool:
-        old_password = validated_data.get("old_password")
-        new_password = validated_data.get("new_password")
-
-        if not instance.check_password(old_password):
-            raise PermissionDenied("Old password is incorrect")
-
-        instance.set_password(new_password)
-        instance.save()
-        cls.save_es(instance)
-        return True
 
     @classmethod
     def update_password_with_token(cls, validated_data: dict, **kwargs) -> bool:

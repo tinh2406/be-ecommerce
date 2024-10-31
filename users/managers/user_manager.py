@@ -1,9 +1,9 @@
 from django.contrib.auth.base_user import BaseUserManager
 
-from core.managers import BaseCacheManager
+from core.managers import BaseTimeManager
 
 
-class UserManager(BaseUserManager, BaseCacheManager):
+class UserManager(BaseUserManager, BaseTimeManager):
     def create_user(
         self,
         email,

@@ -13,7 +13,7 @@ from .product_image_service import ProductImageService
 
 class ProductService(BaseService):
 
-    model = Product
+    manager = Product.objects
     es_service = ESProductService
 
     @staticmethod
