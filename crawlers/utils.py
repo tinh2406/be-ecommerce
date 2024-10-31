@@ -22,18 +22,28 @@ def get_value_by_nested_key(data, key, is_required=False):
     return value
 
 
-def remove_html_tags(text=None):
-    if text is None:
-        return None
-    clean = re.compile("<.*?>")
-    return re.sub(clean, "", text)
+def remove_html_tags(func):
+    def wrapper(*args, **kwargs):
+        text = func(*args, **kwargs)
+        if text is None:
+            return None
+        clean = re.compile("<.*?>")
+        return re.sub(clean, "", text)
+
+    return wrapper
 
 
-def remove_tiki_text_extension(text=None):
-    if text is None:
-        return None
-    text = text.split("Giá sản phẩm trên Tiki đã bao gồm thuế theo luật hiện hành.")[0]
-    return text
+def remove_tiki_text_extension(func):
+    def wrapper(*args, **kwargs):
+        text = func(*args, **kwargs)
+        if text is None:
+            return None
+        text = text.split(
+            "Giá sản phẩm trên Tiki đã bao gồm thuế theo luật hiện hành."
+        )[0]
+        return text
+
+    return wrapper
 
 
 def periodic_task_cron_builder(every, cycle_length, start_time):

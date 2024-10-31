@@ -63,9 +63,9 @@ class SearchMapperService:
 
 class ProductMapperService(BaseService, SearchMapperService):
 
-    model = ProductMapper
+    manager = ProductMapper.objects
 
 
 class ProductsMapperService(BaseService, SearchMapperService):
 
-    model = ProductsMapper
+    manager = ProductsMapper.objects

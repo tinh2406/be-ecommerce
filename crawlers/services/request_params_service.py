@@ -4,7 +4,7 @@ from crawlers.models import RequestParams
 
 class RequestParamsService(BaseService):
 
-    model = RequestParams
+    manager = RequestParams.objects
 
     @classmethod
     def create(cls, validated: dict) -> RequestParams:

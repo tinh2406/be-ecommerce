@@ -13,6 +13,12 @@ from crawlers.utils import (
 from products.tasks import create_product_task
 
 
+@remove_tiki_text_extension
+@remove_html_tags
+def extract_description_of_product(data, mapping_key):
+    return get_value_by_nested_key(data, mapping_key)
+
+
 def extract_product_data(data, product_mapper: ProductMapper):
     """Extracts product data based on product mapper fields."""
     return {
@@ -22,10 +28,8 @@ def extract_product_data(data, product_mapper: ProductMapper):
         "name": get_value_by_nested_key(
             data, product_mapper.product_name, is_required=True
         ),
-        "description": remove_tiki_text_extension(
-            remove_html_tags(
-                get_value_by_nested_key(data, product_mapper.product_description)
-            )
+        "description": extract_description_of_product(
+            data, product_mapper.product_description
         ),
         "price": get_value_by_nested_key(
             data, product_mapper.product_price, is_required=True
