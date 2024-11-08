@@ -1,59 +1,18 @@
-from typing import Union
+from django.db.models import Manager
 
-from django.utils import timezone
-from rest_framework.exceptions import NotFound
-
-from crawlers.models import ProductMapper
+from core.services import BaseService
+from crawlers.models import ProductMapper, ProductsMapper
 
 
-class ProductMapperService:
+class SearchMapperService:
 
-    @classmethod
-    def create(cls, validated: dict) -> ProductMapper:
-        mapper = ProductMapper.objects.create(**validated)
-        return mapper
-
-    @classmethod
-    def update(cls, instance: ProductMapper, validated: dict) -> ProductMapper:
-
-        for key, value in validated.items():
-            setattr(instance, key, value)
-        instance.save()
-
-        return instance
-
-    @classmethod
-    def get(
-        cls, pk: int, raise_exception: bool = True, allow_deleted: bool = False
-    ) -> Union["ProductMapper", None]:
-        try:
-            mapper = ProductMapper.objects.get(id=pk)
-            if not allow_deleted and mapper.deleted_at:
-                raise NotFound("Mapper not found")
-            return mapper
-        except ProductMapper.DoesNotExist:
-            if raise_exception:
-                raise NotFound("Mapper not found")
-            return None
-
-    @classmethod
-    def delete(cls, pk):
-        instance = cls.get(pk)
-        instance.deleted_at = timezone.now()
-        instance.save()
-        return True
-
-    @classmethod
-    def restore(cls, pk):
-        instance = cls.get(pk, allow_deleted=True)
-        instance.deleted_at = None
-        instance.save()
-        return True
+    manager: Manager
 
     @classmethod
     def search(cls, query_params: dict, paginate=True, **kwargs):
+        assert cls.manager, "Model not defined"
 
-        query_set = ProductMapper.objects.all()
+        query_set = cls.manager.all()
 
         # Lấy các tham số truy vấn
         keyword = query_params.get("keyword")
@@ -100,3 +59,13 @@ class ProductMapperService:
             return query_set, meta
 
         return query_set
+
+
+class ProductMapperService(BaseService, SearchMapperService):
+
+    manager = ProductMapper.objects
+
+
+class ProductsMapperService(BaseService, SearchMapperService):
+
+    manager = ProductsMapper.objects

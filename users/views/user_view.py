@@ -87,7 +87,7 @@ class UserViewSet(ModelViewSet):
     @action(methods=["POST"], detail=True)
     def restore(self, request, **kwargs):
         user = request.user
-        if user.is_superuser or user.role in (Roles.ADMIN, Roles.STAFF):
+        if not (user.is_superuser or user.role in (Roles.ADMIN, Roles.STAFF)):
             return Response(
                 {"message": "You do not have permission to restore user"}, status=403
             )

@@ -23,6 +23,8 @@ class Product(BaseTimeModel):
     hot_price = FloatField(null=True)
     thumbnail = CharField(max_length=255)
 
+    source_id = CharField(max_length=255, null=True)
+
     cache_key_fields = ["id"]
     cache_time = 300
     key = "product_"

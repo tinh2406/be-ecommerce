@@ -14,46 +14,47 @@ from rest_framework.serializers import (
 from core.utils import BaseQuerySerializer
 from users.constants import Genders, Roles, UserOrderChoice
 from users.models import User
-from users.services import ProfileService, UserService
+from users.services import ESUserService, ProfileService, UserService
 
 
-class RegisterSerializer(Serializer):
+class RegisterSerializer(ModelSerializer):
     email = EmailField()
     password = CharField(validators=[])
     re_password = CharField()
     name = CharField()
 
-    def create(self, validated_data):
-        return UserService.create(validated_data)
+    class Meta:
+        model = User
+        fields = ("email", "password", "re_password", "name")
 
     def validate(self, attrs):
-        user = UserService.get_by_email(attrs["email"], raise_exception=False)
-        if user:
-            raise ValidationError({"email": "Email already exists"}, 400)
         if attrs["password"] != attrs["re_password"]:
             raise ValidationError({"password": "Password does not match"}, 400)
         return attrs
+
+    def create(self, validated_data):
+        validated_data.pop("re_password")
+        try:
+            user = User.objects.create_user(**validated_data)
+            ProfileService.create(user=user)
+            ESUserService.index.delay(UserSerializer(user).data)
+            return user
+        except Exception as e:
+            raise ValidationError(e, 400)
 
 
 class LoginSerializer(Serializer):
     email = EmailField()
     password = CharField()
 
-    def create(self, validated_data):
-        email = validated_data.get("email")
-        password = validated_data.get("password")
-        return UserService.login(email, password)
-
 
 class ChangeEmailSerializer(Serializer):
     token = CharField()
     email = EmailField()
 
-    def validate(self, attrs):
-        user = UserService.get_by_email(attrs["email"], raise_exception=False)
-        if user:
-            raise ValidationError({"email": "Email already exists"}, 400)
-        return attrs
+    def update(self, instance, validated_data):
+        res = UserService.update_email(validated_data)
+        return res
 
 
 class UpdatePasswordSerializer(Serializer):
@@ -67,8 +68,15 @@ class UpdatePasswordSerializer(Serializer):
         return attrs
 
     def update(self, instance, validated_data):
-        res = UserService.update_password(instance, validated_data)
-        return res
+        old_password = validated_data["old_password"]
+        new_password = validated_data["new_password"]
+
+        if not instance.check_password(old_password):
+            raise ValidationError({"old_password": "Old password is incorrect"}, 400)
+
+        instance.set_password(new_password)
+        instance.save()
+        return True
 
 
 class UpdatePasswordWithTokenSerializer(Serializer):
@@ -148,6 +156,7 @@ class UserSerializer(ModelSerializer):
             "role": instance.role,
             "role_name": instance.role_name,
             "created_at": instance.created_at,
+            "updated_at": instance.updated_at,
             "deleted_at": instance.deleted_at,
             "banned_at": instance.banned_at,
         }

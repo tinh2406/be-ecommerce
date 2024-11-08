@@ -41,7 +41,9 @@ class ProductSerializer(ModelSerializer):
                 raise ValidationError({"variants": "This field is required"})
 
             # Lấy danh sách tên của các thuộc tính và giá trị của chúng
-            attribute_values, attribute_names = self.process_attributes(attributes)
+            attribute_values, attribute_names = (
+                self.extract_names_values_from_attributes(attributes)
+            )
 
             # Tính tổng số variants cần có
             total_variants = 1
@@ -49,7 +51,7 @@ class ProductSerializer(ModelSerializer):
                 total_variants *= len(values)
 
             # Xử lý variants
-            variants = self.process_variants(
+            variants = self.validate_variant(
                 variants, attribute_names, attribute_values
             )
 
@@ -101,7 +103,7 @@ class ProductSerializer(ModelSerializer):
         return data
 
     def create(self, validated_data):
-        product = ProductService.create(validated_data)
+        product = ProductService.create_product(validated_data)
         return product
 
     def update(self, instance, validated_data):

@@ -1,2 +1,3 @@
+from .crawler_view import CrawlerViewSet as CrawlerViewSet
 from .product_mapper_view import ProductMapperViewSet as ProductMapperViewSet
 from .products_mapper_view import ProductsMapperViewSet as ProductsMapperViewSet

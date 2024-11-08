@@ -1,8 +1,8 @@
 from typing import Union
 
-from django.utils import timezone
 from rest_framework.exceptions import NotFound
 
+from core.services import BaseService
 from products.models import Product, UserLikeProduct
 from products.serializers.simple_product_serializer import SimpleProductSerializer
 
@@ -11,10 +11,15 @@ from .product_attribute_service import ProductAttributeService
 from .product_image_service import ProductImageService
 
 
-class ProductService:
+class ProductService(BaseService):
 
-    @classmethod
-    def create(cls, validated: dict, **kwargs) -> Product:
+    manager = Product.objects
+    es_service = ESProductService
+
+    @staticmethod
+    def create_product(
+        validated: dict,
+    ):
         name = validated.get("name")
         price = validated.get("price")
         thumbnail = validated.get("thumbnail")
@@ -25,6 +30,7 @@ class ProductService:
         images = validated.get("images", None)
         attributes = validated.get("attributes", None)
         variants = validated.get("variants", None)
+        source_id = validated.get("product_id", None)
 
         product = Product.objects.create(
             name=name,
@@ -33,6 +39,7 @@ class ProductService:
             price=price,
             category_id=category_id,
             hot_price=hot_price,
+            source_id=source_id,
         )
         if images:
             ProductImageService.create_multiple(images, product.id)
@@ -45,9 +52,7 @@ class ProductService:
         return product
 
     @classmethod
-    def get(
-        cls, pk, raise_exception=True, allow_deleted=False, **kwargs
-    ) -> Union[Product, None]:
+    def get(cls, pk, raise_exception=True, **kwargs) -> Union[Product, None]:
         try:
             product = Product.objects.get(
                 id=pk,
@@ -58,13 +63,13 @@ class ProductService:
                     "variants__attributes__product_attribute_value__attribute",
                 ],
             )
-            if not allow_deleted and product.deleted_at:
-                raise NotFound("Product not found")
-            return product
+            if product:
+                return product
         except Exception:
-            if raise_exception:
-                raise NotFound("Product not found")
-            return None
+            pass
+        if raise_exception:
+            raise NotFound("Product not found")
+        return None
 
     @classmethod
     def update(
@@ -93,24 +98,6 @@ class ProductService:
         serializer = SimpleProductSerializer(instance)
         ESProductService.index.delay(serializer.data)
         return instance
-
-    @classmethod
-    def delete(cls, pk):
-        instance = cls.get(pk, use_cache=False)
-
-        instance.deleted_at = timezone.now()
-        instance.save()
-
-        ESProductService.delete.delay(str(pk))
-        return True
-
-    @classmethod
-    def restore(cls, pk):
-        instance = cls.get(pk, allow_deleted=True)
-        instance.deleted_at = None
-        instance.save()
-        ESProductService.restore.delay(str(pk))
-        return True
 
     @classmethod
     def like(cls, pk, user_id):

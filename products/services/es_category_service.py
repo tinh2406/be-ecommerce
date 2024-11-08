@@ -2,10 +2,11 @@ from celery import shared_task
 from django.utils import timezone
 from elasticsearch_dsl.query import Exists, Range, Term
 
+from core.services import BaseESService
 from products.document import CategoryDocument
 
 
-class ESCategoryService:
+class ESCategoryService(BaseESService):
 
     @staticmethod
     @shared_task
@@ -21,25 +22,13 @@ class ESCategoryService:
 
     @staticmethod
     @shared_task
-    def update(category: dict):
-        cate_doc = CategoryDocument.get(id=category.get("id"))
-        cate_doc.update(
-            name=category.get("name"),
-            parent_id=category.get("parent_id"),
-            created_at=category.get("created_at"),
-            deleted_at=category.get("deleted_at"),
-        )
-        return cate_doc.save()
-
-    @staticmethod
-    @shared_task
-    def delete(pk):
+    def soft_delete(pk):
         cate_doc = CategoryDocument.get(id=str(pk))
         return cate_doc.update(deleted_at=timezone.now())
 
-    @classmethod
+    @staticmethod
     @shared_task
-    def restore(cls, pk):
+    def restore(pk):
         cate_doc = CategoryDocument.get(id=str(pk))
         return cate_doc.update(deleted_at=None)
 
