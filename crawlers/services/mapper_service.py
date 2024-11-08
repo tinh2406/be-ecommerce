@@ -1,4 +1,4 @@
-from django.db.models import Model
+from django.db.models import Manager
 
 from core.services import BaseService
 from crawlers.models import ProductMapper, ProductsMapper
@@ -6,13 +6,13 @@ from crawlers.models import ProductMapper, ProductsMapper
 
 class SearchMapperService:
 
-    model: Model
+    manager: Manager
 
     @classmethod
     def search(cls, query_params: dict, paginate=True, **kwargs):
-        assert cls.model, "Model not defined"
+        assert cls.manager, "Model not defined"
 
-        query_set = cls.model.objects.all()
+        query_set = cls.manager.all()
 
         # Lấy các tham số truy vấn
         keyword = query_params.get("keyword")

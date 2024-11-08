@@ -112,6 +112,14 @@ class ESProductService(BaseESService):
                         "price": {"order": order_type},
                     }
                 )
+            elif order_by == "name":
+                search = search.sort(
+                    {
+                        "name.keyword": {
+                            "order": order_type,
+                        }
+                    }
+                )
             else:
                 search = search.sort({order_by: {"order": order_type}})
 

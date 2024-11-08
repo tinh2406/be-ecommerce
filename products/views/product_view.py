@@ -55,8 +55,8 @@ class ProductViewSet(ModelViewSet):
     def list(self, request, *args, **kwargs):
         query = QueryProductSerializer(data=request.query_params)
         query.is_valid(raise_exception=True)
-        categories = ESProductService.search(query.data)
-        return Response(categories)
+        products = ESProductService.search(query.data)
+        return Response(products)
 
     @action(detail=True, methods=["post"])
     def like(self, request, pk=None):

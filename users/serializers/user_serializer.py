@@ -156,6 +156,7 @@ class UserSerializer(ModelSerializer):
             "role": instance.role,
             "role_name": instance.role_name,
             "created_at": instance.created_at,
+            "updated_at": instance.updated_at,
             "deleted_at": instance.deleted_at,
             "banned_at": instance.banned_at,
         }

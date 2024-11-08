@@ -53,7 +53,9 @@ class CrawlerService:
     @classmethod
     def get(cls, pk, raise_exception=True) -> Union["PeriodicTask", None]:
         try:
-            crawler = PeriodicTask.objects.get(id=pk)
+            crawler = PeriodicTask.objects.prefetch_related("interval", "crontab").get(
+                id=pk
+            )
             return crawler
         except PeriodicTask.DoesNotExist:
             if raise_exception:
@@ -105,7 +107,7 @@ class CrawlerService:
     @classmethod
     def search(cls, query_params: dict, paginate=True, **kwargs):
 
-        query_set = PeriodicTask.objects.all()
+        query_set = PeriodicTask.objects.all().prefetch_related("crontab", "interval")
 
         # Lấy các tham số truy vấn
         keyword = query_params.get("keyword")
@@ -117,6 +119,8 @@ class CrawlerService:
         page_size = query_params.get("page_size") or 10
         page = query_params.get("page") or 1
         skip = (page - 1) * page_size  # Tính toán skip từ page và page_size
+
+        query_set = query_set.filter(task="crawl_task")
 
         if is_running is not None:
             query_set = query_set.filter(enabled=is_running)
@@ -130,11 +134,12 @@ class CrawlerService:
         if last_run_to:
             query_set = query_set.filter(last_run_at__lte=last_run_to)
 
+        query_set = query_set.order_by(
+            f"{'-' if order_type == 'desc' else ''}{order_by}", "-total_run_count"
+        )
         if paginate:
             total = query_set.count()
-            query_set = query_set.order_by(
-                f"{'-' if order_type == 'desc' else ''}{order_by}"
-            )[skip : skip + page_size]
+            query_set = query_set[skip : skip + page_size]
 
             meta = {
                 "page_count": (total - 1) // page_size + 1,
