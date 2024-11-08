@@ -103,7 +103,21 @@ class PeriodicTaskSerializer(ModelSerializer):
 
     def to_representation(self, instance: PeriodicTask):
         instance.kwargs = json.loads(instance.kwargs)
-        return super().to_representation(instance)
+        ret = super().to_representation(instance)
+        ret["crontab_id"] = instance.crontab_id
+        if instance.crontab_id:
+            ret["crontab"] = {
+                "minute": instance.crontab.minute,
+                "hour": instance.crontab.hour,
+                "day_of_month": instance.crontab.day_of_month,
+                "month_of_year": instance.crontab.month_of_year,
+            }
+        if instance.interval_id:
+            ret["interval"] = {
+                "every": instance.interval.every,
+                "period": instance.interval.period,
+            }
+        return ret
 
 
 class DetailPeriodicTaskSerializer(ModelSerializer):
@@ -114,6 +128,7 @@ class DetailPeriodicTaskSerializer(ModelSerializer):
     def to_representation(self, instance):
         kwargs = json.loads(instance.kwargs)
         request_params = RequestParamsService.get(kwargs["request_params_id"])
+
         data = {
             "id": instance.id,
             "name": instance.name,
@@ -126,6 +141,24 @@ class DetailPeriodicTaskSerializer(ModelSerializer):
             "kwargs": kwargs,
             "params": request_params.params,
             "headers": request_params.headers,
+            "interval": (
+                {
+                    "every": instance.interval.every,
+                    "period": instance.interval.period,
+                }
+                if instance.interval_id
+                else None
+            ),
+            "crontab": (
+                {
+                    "minute": instance.crontab.minute,
+                    "hour": instance.crontab.hour,
+                    "day_of_month": instance.crontab.day_of_month,
+                    "month_of_year": instance.crontab.month_of_year,
+                }
+                if instance.crontab_id
+                else None
+            ),
         }
         return data
 
