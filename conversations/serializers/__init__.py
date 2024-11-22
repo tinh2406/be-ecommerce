@@ -2,5 +2,6 @@ from .conversation_serializer import ConversationSerializer as ConversationSeria
 from .conversation_serializer import (
     QueryConversationSerializer as QueryConversationSerializer,
 )
+from .conversation_serializer import QueryUserSerializer as QueryUserSerializer
 from .message_serializer import MessageSerializer as MessageSerializer
 from .message_serializer import QueryMessageSerializer as QueryMessageSerializer

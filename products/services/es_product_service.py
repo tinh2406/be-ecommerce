@@ -11,6 +11,7 @@ class ESProductService(BaseESService):
     @staticmethod
     @shared_task
     def index(product: dict):
+
         product_doc = ProductDocument(
             meta={"id": product.get("id")},
             id=product.get("id"),
@@ -35,6 +36,31 @@ class ESProductService(BaseESService):
     def restore(pk):
         product_doc = ProductDocument.get(id=str(pk))
         product_doc.update(deleted_at=None)
+
+    @classmethod
+    def get_list_by_ids(cls, ids: list[str]):
+
+        _ids = []
+        for _id in ids:
+            if "-" in _id:
+                _ids.append(_id)
+            else:
+                _ids.append(
+                    f"{_id[:8]}-{_id[8:12]}-{_id[12:16]}-{_id[16:20]}-{_id[20:]}"
+                )
+
+        search = ProductDocument.search().from_dict(
+            {
+                "query": {
+                    "bool": {
+                        "must": [{"terms": {"id": _ids}}],
+                        "must_not": [{"exists": {"field": "deleted_at"}}],
+                    }
+                }
+            }
+        )
+        response = search.execute()
+        return [product for product in response.hits]
 
     @classmethod
     def search(cls, query_params: dict, paginate=True, **kwargs):
@@ -82,7 +108,7 @@ class ESProductService(BaseESService):
                 )
             )
         if category_id:
-            search = search.query({"term": {"category_id.keyword": category_id}})
+            search = search.query({"term": {"category_id": category_id}})
         if created_from:
             search = search.query(Range(created_at={"gte": created_from}))
         if created_to:
@@ -108,8 +134,20 @@ class ESProductService(BaseESService):
             if order_by == "price":
                 search = search.sort(
                     {
-                        "hot_price": {"order": order_type, "missing": "_last"},
-                        "price": {"order": order_type},
+                        "_script": {
+                            "type": "number",
+                            "script": {
+                                "lang": "painless",
+                                "source": """
+                                    if (doc['hot_price'].size() != 0) {
+                                        return doc['hot_price'].value;
+                                    } else {
+                                        return doc['price'].value;
+                                    }
+                                """,
+                            },
+                            "order": order_type,
+                        }
                     }
                 )
             elif order_by == "name":

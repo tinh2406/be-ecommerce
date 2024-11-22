@@ -91,6 +91,8 @@ class AddressService:
         queryset = Address.objects.all()
 
         if user_id:
+            if isinstance(user_id, list):
+                user_id = user_id[0]
             queryset = queryset.filter(user_id=user_id)
         if text:
             queryset = queryset.filter(detail__icontains=text)

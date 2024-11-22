@@ -1,6 +1,23 @@
+import threading
+
+from bson import ObjectId
+from django.conf import settings
+from django_eventstream import send_event
+from pymongo import MongoClient
+
+from chatbot.services.chatbot import ChatbotService
+from conversations.constants import MessageRoles
 from conversations.models import Message
 from conversations.services.conversation_service import ConversationService
+from conversations.services.un_read_service import UnReadService
 from core.services import BaseService
+
+# Khởi tạo MongoClient và kết nối đến MongoDB
+client = MongoClient(
+    f"mongodb://{settings.MONGO_USERNAME}:{settings.MONGO_PASSWORD}@nqt_server:27017/"
+)
+db = client[settings.MONGO_DATABASE]
+message_params_collection = db["message_params"]
 
 
 class MessageService(BaseService):
@@ -15,15 +32,84 @@ class MessageService(BaseService):
         if not conversation:
             conversation = ConversationService.create(
                 validated={
-                    "name": "Test new conversation",
+                    "name": "New conversation",
                     "sender_id": sender_id,
                 }
             )
+            cv_thread = threading.Thread(
+                target=cls.update_conversation_name,
+                args=(conversation.id, kwargs.get("content")),
+            )
+            cv_thread.start()
+
+        params = kwargs.pop("params", None)
+        if params:
+            kwargs["params"] = cls.create_params(**params)
+
         message = Message.objects.create(
             **kwargs, sender_id=sender_id, conversation_id=conversation.id
         )
-        ConversationService.update(conversation, {"last_message_id": message.id})
+        ConversationService.update_last_message(
+            conversation, {"last_message_id": message.id}
+        )
+
+        if message.role == MessageRoles.USER:
+
+            thread = threading.Thread(
+                target=cls.create_bot_message,
+                args=(conversation.id, message.content),
+            )
+            thread.start()
+        else:
+            UnReadService.add_unread(conversation_id, sender_id)
+            cls.create_notify(sender_id, conversation.id, message.id)
+
         return message
+
+    @classmethod
+    def create_bot_message(cls, conversation_id, question):
+        conversation = ConversationService.get(conversation_id)
+        histories = cls.search(
+            {"conversation_id": conversation_id, "page_size": 10, "page": 1},
+            paginate=False,
+        )
+        messages = [
+            {"role": history.role, "content": history.content} for history in histories
+        ]
+
+        response, navigates, actions, is_contact_support = (
+            ChatbotService.generate_response(messages, question)
+        )
+
+        if is_contact_support:
+            # TODO: Send message to staff
+            pass
+
+        params = cls.create_params(navigates=navigates, actions=actions)
+
+        message = Message.objects.create(
+            conversation_id=conversation_id,
+            role=MessageRoles.BOT,
+            content=response,
+            params=params,
+        )
+        UnReadService.add_unread(conversation_id, conversation.sender_id)
+        ConversationService.update_last_message(
+            conversation, {"last_message_id": message.id}
+        )
+        cls.create_notify(conversation.sender_id, conversation.id, message.id)
+
+        return message
+
+    @classmethod
+    def update_conversation_name(cls, conversation_id, message):
+        conversation = ConversationService.get(conversation_id)
+
+        name = ChatbotService.generate_name_for_conversation(message)
+
+        ConversationService.update(conversation, {"name": name})
+        cls.conversation_name_change_notify(conversation.sender_id, conversation.id)
+        return conversation
 
     @classmethod
     def update(cls, instance: Message, validated: dict):
@@ -50,6 +136,7 @@ class MessageService(BaseService):
             query_set = query_set.filter(content__icontains=keyword)
 
         query_set = query_set.order_by("-created_at")
+        query_set = query_set[skip : skip + page_size]
 
         if paginate:
             count = query_set.count()
@@ -59,7 +146,34 @@ class MessageService(BaseService):
                 "page_size": page_size,
                 "page_count": count // page_size + 1,
             }
-            query_set = query_set[skip : skip + page_size]
             return query_set, meta
 
         return query_set
+
+    @classmethod
+    def conversation_name_change_notify(cls, sender_id, conversation_id):
+        send_event(
+            f"user-{sender_id}",
+            "message",
+            {"id": conversation_id, "type": "CONVERSATION_NAME_CHANGE"},
+        )
+
+    @classmethod
+    def create_notify(cls, sender_id, conversation_id, message_id):
+        send_event(
+            f"user-{sender_id}", "message", {"id": message_id, "type": "NEW_MESSAGE"}
+        )
+
+        send_event(
+            f"user-{sender_id}",
+            "message",
+            {"id": conversation_id, "type": "CONVERSATION_UPDATE"},
+        )
+
+    @classmethod
+    def create_params(cls, **kwargs):
+        return message_params_collection.insert_one(kwargs).inserted_id
+
+    @classmethod
+    def get_params(cls, id):
+        return message_params_collection.find_one({"_id": ObjectId(id)})
