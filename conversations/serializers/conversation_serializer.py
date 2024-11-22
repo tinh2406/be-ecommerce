@@ -42,3 +42,11 @@ class QueryConversationSerializer(BaseQuerySerializer):
     order_by = ChoiceField(
         allow_null=True, required=False, choices=ConversationOrderChoices
     )
+
+
+class QueryUserSerializer(BaseQuerySerializer):
+
+    # override
+    order_by = ChoiceField(
+        allow_null=True, required=False, choices=["conversation_count", "name"]
+    )

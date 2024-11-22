@@ -109,3 +109,14 @@ class ProductService(BaseService):
     def unlike(cls, pk, user_id):
         UserLikeProduct.objects.filter(user_id=user_id, product_id=pk).delete()
         return True
+
+    @classmethod
+    def check_is_like(cls, pk, user_id):
+        return UserLikeProduct.objects.filter(user_id=user_id, product_id=pk).exists()
+
+    @classmethod
+    def get_wish_list(cls, user_id):
+        product_ids = UserLikeProduct.objects.filter(user_id=user_id).values_list(
+            "product_id", flat=True
+        )
+        return ESProductService.get_list_by_ids(list(product_ids))

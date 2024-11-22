@@ -54,6 +54,8 @@ class ESConversationService(BaseESService):
         page = query_params.get("page") or 1
         skip = page_size * (page - 1)
 
+        search = search.query(Exists(field="last_message_id"))
+
         if is_deleted is not None:
             query = (
                 Exists(field="deleted_at")

@@ -7,6 +7,12 @@ from . import BASE_DIR, env
 SECRET_KEY = env("SECRET_KEY")
 API_HOST = env("API_HOST")
 API_PORT = env("API_PORT")
+UI_HOST = env("UI_HOST")
+FRONTEND_URL = env("FRONTEND_URL")
+
+MONGO_DATABASE = env("MONGO_DATABASE")
+MONGO_USERNAME = env("MONGO_USERNAME")
+MONGO_PASSWORD = env("MONGO_PASSWORD")
 
 # Redis
 REDIS_HOST = env("REDIS_HOST", default="localhost")
@@ -73,10 +79,12 @@ DJANGO_APPS = (
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
+    "daphne",
     "django.contrib.staticfiles",
 )
 THIRD_PARTY_APPS = (
     "rest_framework",
+    "django_eventstream",
     "django_elasticsearch_dsl",
     "corsheaders",
     "django_celery_beat",
@@ -86,7 +94,15 @@ THIRD_PARTY_APPS = (
     "django_nose",
     "djongo",
 )
-LOCAL_APPS = ("users", "products", "crawlers", "conversations")
+LOCAL_APPS = (
+    "users",
+    "products",
+    "crawlers",
+    "conversations",
+    "chatbot",
+    "events",
+    "suggestion",
+)
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 AUTH_USER_MODEL = "users.User"
@@ -136,6 +152,12 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 12,
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
     "TEST_REQUEST_DEFAULT_FORMAT": "json",
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
+        "django_eventstream.renderers.SSEEventRenderer",
+        "django_eventstream.renderers.BrowsableAPIEventStreamRenderer",
+    ],
 }
 
 # Testing
@@ -158,6 +180,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "core.wsgi.application"
+ASGI_APPLICATION = "core.asgi.application"
 
 
 # Database
@@ -185,11 +208,11 @@ def mongo_config(prefix="", test=None):
         test = {}
     return {
         "ENGINE": "djongo",
-        "NAME": env("MONGO_DATABASE"),
+        "NAME": MONGO_DATABASE,
         "CLIENT": {
             "host": env("MONGO_HOST"),
-            "username": env("MONGO_USERNAME"),
-            "password": env("MONGO_PASSWORD"),
+            "username": MONGO_USERNAME,
+            "password": MONGO_PASSWORD,
         },
     }
 
@@ -238,4 +261,7 @@ ALLOWED_HOSTS = [
     "0.0.0.0",
     "192.168.61.30",
     "192.168.27.30",
+    "127.0.0.1",
 ]
+
+GPT_TOKEN = env("GIT_KEY")

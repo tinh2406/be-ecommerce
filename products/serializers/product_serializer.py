@@ -6,6 +6,7 @@ from rest_framework.serializers import (
     DictField,
     ListField,
     ModelSerializer,
+    Serializer,
     ValidationError,
 )
 
@@ -66,7 +67,7 @@ class ProductSerializer(ModelSerializer):
 
     def to_representation(self, instance: Product):
         data = dict()
-        data["id"] = instance.id
+        data["id"] = str(instance.id)
         data["name"] = instance.name
         data["description"] = instance.description
         data["price"] = instance.price
@@ -153,6 +154,10 @@ class ProductSerializer(ModelSerializer):
                 raise ValidationError({"image": "This field is required"})
 
         return list(variant_dict.values())
+
+
+class QueryByListIds(Serializer):
+    product_ids = ListField(child=CharField(max_length=255))
 
 
 class QueryProductSerializer(BaseQuerySerializer):

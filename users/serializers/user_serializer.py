@@ -140,7 +140,7 @@ class UserSerializer(ModelSerializer):
             RegexValidator(r"^\d{10}$", message="Phone number must be 11 digits")
         ],
     )
-    image = CharField(max_length=255, allow_null=True)
+    image = CharField(max_length=255, allow_null=True, allow_blank=True)
     gender = ChoiceField(choices=Genders.CHOICES, allow_null=True)
 
     def to_representation(self, instance):

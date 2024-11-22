@@ -1,12 +1,23 @@
 from rest_framework.serializers import CharField, ModelSerializer
 
 from conversations.models import Message
+from conversations.services import MessageService
 from core.utils import BaseQuerySerializer
 
 
 class MessageSerializer(ModelSerializer):
 
     conversation_id = CharField(write_only=True, required=False)
+
+    def to_representation(self, instance):
+        params = None
+        if instance.params:
+            params = MessageService.get_params(instance.params)
+            params.pop("_id", None)
+        data = super().to_representation(instance)
+        data["params"] = params
+
+        return data
 
     class Meta:
         model = Message

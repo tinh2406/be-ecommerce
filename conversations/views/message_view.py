@@ -51,3 +51,14 @@ class MessageViewSet(ModelViewSet):
 
         messages = MessageSerializer(data, many=True).data
         return Response({**meta, "data": messages})
+
+    def retrieve(self, request, *args, **kwargs):
+        message = MessageService.get(kwargs.get("pk"))
+
+        if request.user.role == Roles.CUSTOMER and message.sender_id != request.user.id:
+            return Response(
+                {"detail": "You are not allowed to view this message"},
+                status=403,
+            )
+
+        return Response(MessageSerializer(message).data)
