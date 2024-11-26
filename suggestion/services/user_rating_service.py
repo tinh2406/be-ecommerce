@@ -1,8 +1,23 @@
-import pandas as pd
+import random
+
 import torch
 
 from core.settings import BASE_DIR
-from suggestion.utils import masked_cosine_similarity_matrix
+from suggestion.utils import (
+    get_20latest_rating_matrix,
+    get_disinterest,
+    get_hidden_user_rating_matrix,
+    get_predicted_user_rating_matrix,
+    get_real_user_rating_matrix,
+    get_user_ids,
+    masked_cosine_similarity_matrix,
+    save_20latest_rating_matrix,
+    save_disinterest,
+    save_hidden_user_rating_matrix,
+    save_predicted_user_rating_matrix,
+    save_real_user_rating_matrix,
+    save_user_ids,
+)
 
 from .predict_user_rating_service import Rating
 from .product_similarity_service import ProductSimilarityService
@@ -10,102 +25,6 @@ from .product_similarity_service import ProductSimilarityService
 path = f"{BASE_DIR}/suggestion/data"
 
 device = torch.device("mps" if torch.mps.is_available() else "cpu")
-
-
-def get_user_ids(file_path: str) -> list[str]:
-    ids = pd.read_csv(file_path, header=None)
-    return ids.to_numpy().flatten().tolist()
-
-
-def save_user_ids(user_ids: list[str]):
-    user_ids = pd.DataFrame(user_ids)
-    user_ids.to_csv(f"{path}/users/1ids.csv", index=False, header=False)
-
-
-def get_real_user_rating_matrix(file_path: str) -> torch.Tensor:
-    matrix = pd.read_csv(file_path, header=None)
-    matrix = torch.tensor(matrix.values)
-    return matrix
-
-
-def save_real_user_rating_matrix(user_rating_matrix: torch.Tensor):
-    user_rating_matrix = pd.DataFrame(user_rating_matrix.numpy())
-    user_rating_matrix.to_csv(
-        f"{path}/users/2real_rating.csv", index=False, header=False
-    )
-
-
-def get_hidden_user_rating_matrix(file_path: str) -> torch.Tensor:
-    matrix = pd.read_csv(file_path, header=None)
-    matrix = torch.tensor(matrix.values)
-    return matrix
-
-
-def save_hidden_user_rating_matrix(user_rating_matrix: torch.Tensor):
-    user_rating_matrix = pd.DataFrame(user_rating_matrix.numpy())
-    user_rating_matrix.to_csv(
-        f"{path}/users/3hidden_rating.csv", index=False, header=False
-    )
-
-
-def get_predicted_user_rating_matrix(file_path: str) -> torch.Tensor:
-    matrix = pd.read_csv(file_path, header=None)
-    matrix = torch.tensor(matrix.values)
-    return matrix
-
-
-def save_predicted_user_rating_matrix(user_rating_matrix: torch.Tensor):
-    user_rating_matrix = pd.DataFrame(user_rating_matrix.numpy())
-    user_rating_matrix.to_csv(
-        f"{path}/users/4predicted_rating.csv", index=False, header=False
-    )
-
-
-def get_20latest_rating_matrix() -> pd.DataFrame:
-    like = pd.read_csv(f"{path}/users/5_20latest_like_rating.csv", header=None)
-    dislike = pd.read_csv(f"{path}/users/5_20latest_dislike_rating.csv", header=None)
-
-    matrix = []
-    for i in range(len(like)):
-        _like = [int(i) for i in like.iloc[i].tolist() if not pd.isna(i) and i != -1]
-        _dislike = [
-            int(i) for i in dislike.iloc[i].tolist() if not pd.isna(i) and i != -1
-        ]
-        matrix.append([_like, _dislike])
-
-    return pd.DataFrame(matrix)
-
-
-def save_20latest_rating_matrix(user_rating_matrix: pd.DataFrame):
-    like = []
-    dislike = []
-    for i in range(len(user_rating_matrix)):
-        _like = user_rating_matrix.iloc[i][0]
-        _dislike = user_rating_matrix.iloc[i][1]
-        if len(_like) < 20:
-            _like = _like + [-1] * (20 - len(_like))
-        if len(_dislike) < 20:
-            _dislike = _dislike + [-1] * (20 - len(_dislike))
-        like.append(_like)
-        dislike.append(_dislike)
-
-    pd.DataFrame(like).to_csv(
-        f"{path}/users/5_20latest_like_rating.csv", index=False, header=False
-    )
-    pd.DataFrame(dislike).to_csv(
-        f"{path}/users/5_20latest_dislike_rating.csv", index=False, header=False
-    )
-
-
-def get_disinterest(file_path: str) -> torch.Tensor:
-    disinterest = pd.read_csv(file_path, header=None)
-    disinterest = torch.tensor(disinterest.values)
-    return disinterest
-
-
-def save_disinterest(disinterest: torch.Tensor):
-    disinterest = pd.DataFrame(disinterest.numpy())
-    disinterest.to_csv(f"{path}/users/6disinterest.csv", index=False, header=False)
 
 
 class UserRatingService:
@@ -354,8 +273,13 @@ class UserRatingService:
 
     @classmethod
     def get_highest_product_rating(cls):
+        mean = torch.mean(cls.hidden_user_rating_matrix, dtype=float, dim=0)
+        if max(mean) < 0.1:
+            return list(
+                {random.randint(0, len(cls.sorted_products) - 1) for _ in range(20)}
+            )
         highest_ratings = torch.argsort(
-            torch.mean(cls.hidden_user_rating_matrix, dtype=float, dim=0),
+            mean,
             descending=True,
         ).tolist()[:20]
 

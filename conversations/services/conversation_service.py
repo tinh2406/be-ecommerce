@@ -1,4 +1,5 @@
 from math import ceil
+from typing import Any
 
 from django.db import connection
 from rest_framework.exceptions import NotFound
@@ -12,7 +13,7 @@ from users.models import User
 
 class ConversationService(BaseService):
 
-    model = Conversation
+    manager = Conversation.objects
     es_service = ESConversationService
 
     @classmethod
@@ -24,14 +25,14 @@ class ConversationService(BaseService):
         return obj
 
     @classmethod
-    def get(cls, pk, raise_exception=True, **kwargs) -> Conversation:
+    def get(cls, pk, raise_exception=True, **kwargs) -> Any | None:
         try:
             instance = Conversation.objects.get(
                 id=pk, related_fields=["last_message", "sender"]
             )
             if instance:
                 return instance
-        except cls.model.DoesNotExist:
+        except Exception:
             pass
         if raise_exception:
             raise NotFound("Object not found")
@@ -51,16 +52,17 @@ class ConversationService(BaseService):
         return instance
 
     @classmethod
-    def update_last_message(cls, instance, validated: dict):
-        instance.last_message_id = (
-            validated.get("last_message_id") or instance.last_message_id
+    def update_last_message(cls, conversation_id, validated: dict):
+        conversation = cls.get(conversation_id)
+        conversation.last_message_id = (
+            validated.get("last_message_id") or conversation.last_message_id
         )
-        instance.save()
-
-        serializer = SimpleConversationSerializer(instance)
+        print(conversation.name)
+        conversation.save()
+        serializer = SimpleConversationSerializer(conversation)
         ESConversationService.index.delay(serializer.data)
 
-        return instance
+        return conversation
 
     @classmethod
     def list_user(cls, query_params, **kwargs):

@@ -52,6 +52,11 @@ class ConversationViewSet(ModelViewSet):
         query_params = request.query_params
         query_serializer = QueryConversationSerializer(data=query_params)
         query_serializer.is_valid(raise_exception=True)
+
+        user = request.user
+        if user.role == Roles.CUSTOMER:
+            query_serializer.validated_data["user_id"] = user.id
+
         data = ESConversationService.search(
             query_serializer.validated_data, paginate=True
         )

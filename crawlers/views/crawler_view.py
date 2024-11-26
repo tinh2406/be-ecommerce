@@ -32,9 +32,8 @@ class CrawlerViewSet(ModelViewSet):
         instance = CrawlerService.get(kwargs.get("pk"))
         data = CrawlerSerializer(instance, data=request.data)
         data.is_valid(raise_exception=True)
-        CrawlerService.update(instance, data.validated_data)
-        crawler_id = data.save()
-        return Response({"data": crawler_id})
+        crawler = CrawlerService.update(instance, data.validated_data)
+        return Response({"data": crawler.id})
 
     @action(detail=True, methods=["post"])
     def activate(self, request, *args, **kwargs):

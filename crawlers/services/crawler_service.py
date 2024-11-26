@@ -65,21 +65,38 @@ class CrawlerService:
     @classmethod
     def update(cls, instance: PeriodicTask, validated: dict) -> PeriodicTask:
 
+        name = validated.get("name")
+        url = validated.get("url")
+        detail_url = validated.get("detail_url")
+        quantity = validated.get("quantity")
         start_time = validated.get("start_time")
         end_time = validated.get("end_time")
         cycle_length = validated.get("cycle_length")
         every = validated.get("every")
+        products_mapper_id = validated.get("products_mapper_id")
+        product_mapper_id = validated.get("product_mapper_id")
+
         schedule = periodic_task_cron_builder(every, cycle_length, start_time)
 
-        instance.crontab = schedule.get("crontab")
-        instance.interval = schedule.get("interval")
-        instance.name = validated.get("name")
+        request_params = RequestParamsService.create(validated)
+        request_params_id = str(request_params.id)
+
+        instance.name = name
+        instance.enabled = False
         instance.expires = end_time
         instance.start_time = start_time
-
-        kwargs = json.loads(instance.kwargs)
-        kwargs["quantity"] = validated.get("quantity")
-        instance.kwargs = json.dumps(kwargs)
+        instance.crontab = schedule.get("crontab")
+        instance.interval = schedule.get("interval")
+        instance.kwargs = json.dumps(
+            {
+                "url": url,
+                "detail_url": detail_url,
+                "quantity": quantity,
+                "request_params_id": request_params_id,
+                "product_mapper_id": product_mapper_id,
+                "products_mapper_id": products_mapper_id,
+            }
+        )
 
         instance.save()
         return instance

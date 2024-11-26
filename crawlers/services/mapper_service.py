@@ -5,7 +5,6 @@ from crawlers.models import ProductMapper, ProductsMapper
 
 
 class SearchMapperService:
-
     manager: Manager
 
     @classmethod
@@ -46,7 +45,7 @@ class SearchMapperService:
         if paginate:
             total = query_set.count()
             query_set = query_set.order_by(
-                f"{'-' if order_type=='desc' else ''}{order_by}"
+                f"{'-' if order_type == 'desc' else ''}{order_by}"
             )[skip : skip + page_size]
 
             meta = {
@@ -62,10 +61,8 @@ class SearchMapperService:
 
 
 class ProductMapperService(BaseService, SearchMapperService):
-
     manager = ProductMapper.objects
 
 
 class ProductsMapperService(BaseService, SearchMapperService):
-
     manager = ProductsMapper.objects

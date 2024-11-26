@@ -1,28 +1,14 @@
-import json
-
 import pandas as pd
 import torch
 
 from core.settings import BASE_DIR
 
+from ..utils import create_sorted_similarity_matrix, create_sorted_similarity_products
 from .embedding_service import EmbeddingService
 
 path = f"{BASE_DIR}/suggestion/data"
 
 device = torch.device("mps" if torch.mps.is_available() else "cpu")
-
-
-def read_product_json(file_path: str) -> list[dict]:
-    with open(file_path) as f:
-        data = json.load(f)
-    return data
-
-
-def create_embeddings() -> tuple[list[str], torch.Tensor]:
-    products = read_product_json(f"{path}/products.json")
-    ids, embeddings = EmbeddingService.embedding(products[:100])
-    embeddings = torch.tensor(embeddings).float().to(device)
-    return ids, embeddings
 
 
 def get_old_ids(file_path: str) -> list[str]:
@@ -53,49 +39,6 @@ def get_old_sorted_products(file_path: str) -> torch.Tensor:
     products = pd.read_csv(file_path, header=None)
     products = torch.tensor(products.to_numpy().flatten()).int().to(device)
     return products
-
-
-def create_similarity_matrix(embeddings: torch.Tensor) -> torch.Tensor:
-    embeddings = torch.nn.functional.normalize(embeddings, p=2, dim=1)
-
-    similarity_matrix = torch.mm(embeddings, embeddings.T)
-
-    return similarity_matrix
-
-
-def create_sorted_similarity_products(similarity_matrix: torch.Tensor) -> torch.Tensor:
-    n = len(similarity_matrix)
-    saved = {0}
-    result = [0]
-
-    similarity_matrix = similarity_matrix.clone()
-
-    while len(result) < n:
-        last = result[-1]
-
-        similarity_matrix[last, list(saved)] = -float("inf")
-
-        max_id = torch.argmax(similarity_matrix[last]).item()
-
-        result.append(max_id)
-        saved.add(max_id)
-
-    return torch.tensor(result)
-
-
-def create_sorted_similarity_matrix(similarity_matrix: torch.Tensor) -> torch.Tensor:
-    new_matrix = []
-    similarity_matrix = similarity_matrix.clone()
-    n = len(similarity_matrix)
-
-    for idx in range(n):
-        row = similarity_matrix[idx]
-
-        sorted_indices = torch.argsort(row, descending=True).tolist()
-
-        new_matrix.append(sorted_indices)
-
-    return torch.tensor(new_matrix)
 
 
 def save_ids(ids: list[str]):

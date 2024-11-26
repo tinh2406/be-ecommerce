@@ -89,9 +89,9 @@ class EmbeddingService:
     device: str = torch.device("mps" if torch.mps.is_available() else "cpu")
 
     # TODO uncomment this code
-    # tokenizer = AutoTokenizer.from_pretrained(model_name, output_hidden_states=True)
-    # model_embedding = AutoModel.from_pretrained(model_name)
-    # model_embedding.to(device)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, output_hidden_states=True)
+    model_embedding = AutoModel.from_pretrained(model_name)
+    model_embedding.to(device)
 
     @classmethod
     def embedding(

@@ -20,27 +20,26 @@ class LLM:
         user_messages = [
             {
                 "role": "system",
-                "content": """Bạn là chatbot và nhận được câu hỏi từ người dùng, hãy sinh ra tên cho cuộc hội thoại thật
-                súc tích và thể hiện được thông tin người dùng muốn hỏi là gì.
-                                    Ví dụ:
-                                    {
-                                        "content": "Bạn có những sản phẩm nào?"
-                                        "role": "user"
-                                    }
-                                    Trả lời
-                                    {
-                                        "name": "Thắc mắc về sản phẩm"
-                                    }
-                                    Ví dụ
-                                    {
-                                        "content": "Bạn có ô tô không?"
-                                        "role": "user"
-                                    }
-                                    Trả lời
-                                    {
-                                        "name": "Tìm hiểu về ô tô"
-                                    }
-                                    """.replace(
+                "content": """Bạn là chatbot và nhận được câu hỏi hoặc yêu cầu từ người dùng, hãy sinh ra tên
+                cho cuộc hội thoại thật súc tích và liên quan đến câu hỏi hoặc yêu cầu của người dùng.
+                Ví dụ:
+                {
+                "content": "Bạn có những sản phẩm nào?"
+                "role": "user"
+                }
+                Trả lời
+                {
+                "name": "Thắc mắc về sản phẩm"
+                }
+                Ví dụ
+                {
+                "content": "Bạn có ô tô không?"
+                "role": "user"
+                }
+                Trả lời
+                {
+                "name": "Tìm hiểu về ô tô"
+                }""".replace(
                     "  ", ""
                 ).replace(
                     "\n", ""

@@ -1,0 +1,2 @@
+from .product_statistics_view import ProductStatisticsView as ProductStatisticsView
+from .user_statistics_view import UserStatisticsView as UserStatisticsView

@@ -1,9 +1,11 @@
 import threading
+from time import sleep
 
 from bson import ObjectId
 from django.conf import settings
 from django_eventstream import send_event
 from pymongo import MongoClient
+from rest_framework.exceptions import NotFound
 
 from chatbot.services.chatbot import ChatbotService
 from conversations.constants import MessageRoles
@@ -21,7 +23,19 @@ message_params_collection = db["message_params"]
 
 
 class MessageService(BaseService):
-    model = Message
+    manager = Message.objects
+
+    @classmethod
+    def get(cls, pk, raise_exception=True, **kwargs) -> Message | None:
+        try:
+            instance = Message.objects.prefetch_related("conversation").get(id=pk)
+            if instance:
+                return instance
+        except Exception:
+            pass
+        if raise_exception:
+            raise NotFound("Object not found")
+        return None
 
     @classmethod
     def create(cls, **kwargs):
@@ -50,7 +64,7 @@ class MessageService(BaseService):
             **kwargs, sender_id=sender_id, conversation_id=conversation.id
         )
         ConversationService.update_last_message(
-            conversation, {"last_message_id": message.id}
+            conversation.id, {"last_message_id": message.id}
         )
 
         if message.role == MessageRoles.USER:
@@ -80,6 +94,7 @@ class MessageService(BaseService):
         response, navigates, actions, is_contact_support = (
             ChatbotService.generate_response(messages, question)
         )
+        print(response, navigates, actions, is_contact_support)
 
         if is_contact_support:
             # TODO: Send message to staff
@@ -95,7 +110,7 @@ class MessageService(BaseService):
         )
         UnReadService.add_unread(conversation_id, conversation.sender_id)
         ConversationService.update_last_message(
-            conversation, {"last_message_id": message.id}
+            conversation_id, {"last_message_id": message.id}
         )
         cls.create_notify(conversation.sender_id, conversation.id, message.id)
 
@@ -104,9 +119,10 @@ class MessageService(BaseService):
     @classmethod
     def update_conversation_name(cls, conversation_id, message):
         conversation = ConversationService.get(conversation_id)
-
-        name = ChatbotService.generate_name_for_conversation(message)
-
+        sleep(5)
+        # name = ChatbotService.generate_name_for_conversation(message)
+        name = "Updated name conversation"
+        print(name)
         ConversationService.update(conversation, {"name": name})
         cls.conversation_name_change_notify(conversation.sender_id, conversation.id)
         return conversation

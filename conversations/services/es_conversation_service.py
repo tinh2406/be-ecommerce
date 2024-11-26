@@ -86,7 +86,7 @@ class ESConversationService(BaseESService):
                 }
             )
         if sender_id:
-            search = search.query({"term": {"sender_id.keyword": sender_id}})
+            search = search.query({"term": {"sender_id": sender_id}})
         if created_from:
             search = search.query(Range(created_at={"gte": created_from}))
         if created_to:

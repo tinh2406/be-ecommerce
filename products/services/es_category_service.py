@@ -77,8 +77,18 @@ class ESCategoryService(BaseESService):
         if created_to:
             search = search.query(Range(created_at={"lte": created_to}))
 
-        if paginate:
+        if order_by == "name":
+            search = search.sort(
+                {
+                    "name.keyword": {
+                        "order": order_type,
+                    }
+                }
+            )
+        else:
             search = search.sort({order_by: {"order": order_type}})
+
+        if paginate:
             search = search[skip : skip + page_size]
 
         response = search.execute()

@@ -11,4 +11,5 @@ urlpatterns = [
     path("api/v1/", include("conversations.urls")),
     path("api/v1/", include("events.urls")),
     path("api/v1/", include("suggestion.urls")),
+    path("api/v1/statistics/", include("statistics.urls")),
 ] + static(settings.STATIC_URL)
