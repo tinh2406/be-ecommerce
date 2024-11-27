@@ -1,12 +1,11 @@
+from core.domains import BaseDeleteDomain, BaseRetrieveDomain
 from users.serializers import UserSerializer
 from users.services import ESUserService, JWTService, ProfileService, UserService
 
 
-class UserDomain:
+class UserDomain(BaseRetrieveDomain, BaseDeleteDomain):
 
-    @classmethod
-    def get(cls, pk):
-        return UserService.get(pk, allow_banned=True, allow_deleted=True)
+    main_service = UserService
 
     @classmethod
     def update(cls, user, update_data):
@@ -29,17 +28,12 @@ class UserDomain:
         return UserService.update_password(user, old_password, new_password)
 
     @classmethod
-    def delete(cls, pk) -> bool:
-        if UserService.delete(pk):
-            ESUserService.soft_delete(pk)
-            return True
-        return False
+    def on_delete_success(cls, pk):
+        ESUserService.soft_delete.delay(pk)
 
     @classmethod
-    def restore(cls, pk) -> bool:
-        if UserService.restore(pk):
-            ESUserService.restore(pk)
-            return True
+    def on_restore_success(cls, pk):
+        ESUserService.restore.delay(pk)
 
     @classmethod
     def ban(cls, pk) -> bool:
