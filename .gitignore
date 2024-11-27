@@ -3,5 +3,5 @@ __pycache__
 .env
 /data
 /.idea
-/chatbot/data
-/suggestion/data
+/src/chatbot/data
+/src/suggestion/data
