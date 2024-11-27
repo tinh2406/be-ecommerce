@@ -14,7 +14,6 @@ from rest_framework.serializers import (
 from core.utils import BaseQuerySerializer
 from users.constants import Genders, Roles, UserOrderChoice
 from users.models import User
-from users.services import ESUserService, ProfileService, UserService
 
 
 class RegisterSerializer(ModelSerializer):
@@ -32,29 +31,19 @@ class RegisterSerializer(ModelSerializer):
             raise ValidationError({"password": "Password does not match"}, 400)
         return attrs
 
-    def create(self, validated_data):
-        validated_data.pop("re_password")
-        try:
-            user = User.objects.create_user(**validated_data)
-            ProfileService.create(user=user)
-            ESUserService.index.delay(UserSerializer(user).data)
-            return user
-        except Exception as e:
-            raise ValidationError(e, 400)
-
 
 class LoginSerializer(Serializer):
     email = EmailField()
     password = CharField()
 
 
+class RequestTokenSerializer(Serializer):
+    email = EmailField()
+
+
 class ChangeEmailSerializer(Serializer):
     token = CharField()
     email = EmailField()
-
-    def update(self, instance, validated_data):
-        res = UserService.update_email(validated_data)
-        return res
 
 
 class UpdatePasswordSerializer(Serializer):
@@ -67,17 +56,6 @@ class UpdatePasswordSerializer(Serializer):
             raise ValidationError({"new_password": "New password does not match"}, 400)
         return attrs
 
-    def update(self, instance, validated_data):
-        old_password = validated_data["old_password"]
-        new_password = validated_data["new_password"]
-
-        if not instance.check_password(old_password):
-            raise ValidationError({"old_password": "Old password is incorrect"}, 400)
-
-        instance.set_password(new_password)
-        instance.save()
-        return True
-
 
 class UpdatePasswordWithTokenSerializer(Serializer):
     token = CharField()
@@ -89,10 +67,6 @@ class UpdatePasswordWithTokenSerializer(Serializer):
             raise ValidationError({"new_password": "New password does not match"}, 400)
 
         return attrs
-
-    def update(self, instance, validated_data):
-        res = UserService.update_password_with_token(validated_data)
-        return res
 
 
 class UpdateRoleSerializer(Serializer):
@@ -160,9 +134,3 @@ class UserSerializer(ModelSerializer):
             "deleted_at": instance.deleted_at,
             "banned_at": instance.banned_at,
         }
-
-    def update(self, instance, validated_data):
-        partial = validated_data.pop("partial", False)
-        UserService.update(instance, validated_data, partial=partial)
-        ProfileService.update(instance.profile, validated_data, partial=partial)
-        return instance

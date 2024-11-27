@@ -1,7 +1,7 @@
 class BaseESService:
 
     @staticmethod
-    def index(object: dict):
+    def index(item: dict):
         raise NotImplementedError
 
     @staticmethod

@@ -2,17 +2,17 @@ from typing import Type
 
 from rest_framework.exceptions import NotFound
 
-from core.services.base_es_service import BaseESService
 from src.core.managers import BaseTimeManager
 
 
 class BaseService:
 
     manager: Type[BaseTimeManager]
-    es_service: Type[BaseESService] | None = None
 
     @classmethod
     def create(cls, validated: dict):
+        assert cls.manager, "Model not defined"
+
         obj = cls.manager.create(**validated)
         return obj
 
@@ -29,9 +29,9 @@ class BaseService:
         assert cls.manager, "Model not defined"
 
         try:
-            object = cls.manager.get(id=pk)
-            if object:
-                return object
+            instance = cls.manager.get(id=pk)
+            if instance:
+                return instance
         except Exception:
             pass
         if raise_exception:
@@ -45,8 +45,6 @@ class BaseService:
         instance = cls.get(pk)
         instance.soft_delete()
 
-        if cls.es_service:
-            cls.es_service.soft_delete.delay(str(pk))
         return True
 
     @classmethod
@@ -56,6 +54,4 @@ class BaseService:
         instance = cls.manager.get_with_allow_deleted(id=pk)
         instance.restore()
 
-        if cls.es_service:
-            cls.es_service.restore.delay(str(pk))
         return True

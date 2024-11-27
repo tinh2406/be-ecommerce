@@ -3,12 +3,13 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
+from users.domains import AuthDomain
 from users.serializers import (
     LoginSerializer,
     RegisterSerializer,
     UpdatePasswordWithTokenSerializer,
 )
-from users.services import UserService
+from users.serializers.user_serializer import RequestTokenSerializer
 
 
 class AuthViewSet(ViewSet):
@@ -20,34 +21,31 @@ class AuthViewSet(ViewSet):
     def register(self, request: Request):
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+
+        AuthDomain.register(serializer.validated_data)
         return Response({"message": "Register successfully"})
 
     @action(methods=["POST"], detail=False)
     def login(self, request: Request):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        res = UserService.login(**serializer.validated_data)
-        return Response(res)
+
+        login_data = AuthDomain.login(**serializer.validated_data)
+        return Response(login_data)
 
     @action(methods=["POST"], detail=False)
     def request_token(self, request):
-        email = request.data.get("email")
+        serializer = RequestTokenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        if not email:
-            return Response({"message": "Email is required"}, status=400)
-
-        UserService.request_token(email)
+        AuthDomain.request_token(**serializer.validated_data)
         return Response({"message": "Request verify token successfully"})
 
     @action(methods=["POST"], detail=False)
     def change_password(self, request):
-        user = request.user
-
-        serializer = UpdatePasswordWithTokenSerializer(user, data=request.data)
+        serializer = UpdatePasswordWithTokenSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        if serializer.save():
+        if AuthDomain.reset_password_by_token(**serializer.validated_data):
             return Response({"message": "Change password successfully"})
-
         return Response({"message": "Change password failed"}, status=400)

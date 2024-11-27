@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from users.constants import Roles
+from users.domains import UserDomain
 from users.serializers import (
     ChangeEmailSerializer,
     QueryUserSerializer,
@@ -11,52 +12,45 @@ from users.serializers import (
     UpdateRoleSerializer,
     UserSerializer,
 )
-from users.services import ESUserService, UserService
 
 
 class UserViewSet(ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         user = request.user
-        if str(user.id) == kwargs.get("pk"):
+        pk = kwargs.get("pk")
+        if str(user.id) == pk:
             return self.me(request)
+
         if not (user.is_superuser or user.role in (Roles.ADMIN, Roles.STAFF)):
             return Response(
                 {"message": "You do not have permission to access this user"},
                 status=403,
             )
 
-        instance = UserService.get(
-            kwargs.get("pk"), allow_banned=True, allow_deleted=True
-        )
-        serializer = UserSerializer(instance)
-        return Response(serializer.data)
+        user = UserDomain.get(pk)
+        return Response(UserSerializer(user).data)
 
     @action(methods=["GET"], detail=False)
     def me(self, request):
         user = request.user
-        serializer = UserSerializer(user)
-        return Response(serializer.data)
+        return Response(UserSerializer(user).data)
 
     def update(self, request, *args, **kwargs):
         user = request.user
 
-        partial = kwargs.pop("partial", False)
-        serializer = UserSerializer(user, data=request.data, partial=partial)
+        serializer = UserSerializer(user, data=request.data)
         serializer.is_valid(raise_exception=True)
-        try:
-            serializer.save(partial=partial)
-        except Exception as e:
-            return Response({"message": str(e)}, 400)
 
-        return Response(serializer.data)
+        UserDomain.update(user, serializer.validated_data)
+        return Response({"message": "Update successfully"})
 
     @action(methods=["POST"], detail=False)
     def change_email(self, request):
 
         serializer = ChangeEmailSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        if UserService.update_email(serializer.data):
+        if UserDomain.update_email(**serializer.validated_data):
             return Response({"message": "Change email successfully"})
         return Response({"message": "Change email failed"}, status=400)
 
@@ -67,9 +61,8 @@ class UserViewSet(ModelViewSet):
         serializer = UpdatePasswordSerializer(user, data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        if serializer.save():
+        if UserDomain.update_password(user, **serializer.validated_data):
             return Response({"message": "Change password successfully"})
-
         return Response({"message": "Change password failed"}, status=400)
 
     def destroy(self, request, *args, **kwargs):
@@ -79,7 +72,7 @@ class UserViewSet(ModelViewSet):
         if user.is_superuser or user.role in (Roles.ADMIN, Roles.STAFF):
             pk = kwargs.get("pk")
 
-        if UserService.delete(pk):
+        if UserDomain.delete(pk):
             return Response({"message": "Delete successfully"})
 
         return Response({"message": "Delete failed"}, status=400)
@@ -93,7 +86,7 @@ class UserViewSet(ModelViewSet):
             )
 
         pk = kwargs.get("pk")
-        if UserService.restore(pk):
+        if UserDomain.restore(pk):
             return Response({"message": "Restore successfully"})
         return Response({"message": "Restore failed"}, status=400)
 
@@ -106,7 +99,7 @@ class UserViewSet(ModelViewSet):
             )
 
         pk = kwargs.get("pk")
-        if UserService.ban(pk):
+        if UserDomain.ban(pk):
             return Response({"message": "Ban user successfully"})
         return Response({"message": "Ban failed"}, status=400)
 
@@ -119,22 +112,20 @@ class UserViewSet(ModelViewSet):
             )
 
         pk = kwargs.get("pk")
-        if UserService.unban(pk):
+        if UserDomain.unban(pk):
             return Response({"message": "Unban user successfully"})
         return Response({"message": "Unban failed"}, status=400)
 
     @action(methods=["POST"], detail=True)
     def update_role(self, request, **kwargs):
-        pk = kwargs.get("pk")
-        instance = UserService.get(pk)
-
         user = request.user
 
+        pk = kwargs.get("pk")
         serializer = UpdateRoleSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        if UserService.update_role(user, instance, role=serializer.data.get("role")):
-            return Response({"message": "Update role successfully"})
 
+        if UserDomain.update_role(user, pk, role=serializer.data.get("role")):
+            return Response({"message": "Update role successfully"})
         return Response({"message": "Update role failed"}, status=400)
 
     def list(self, request: Request, *args, **kwargs):
@@ -145,6 +136,5 @@ class UserViewSet(ModelViewSet):
         query = QueryUserSerializer(data=request.query_params)
         query.is_valid(raise_exception=True)
 
-        users = ESUserService.search(query.data)
-
+        users = UserDomain.search_user(query.validated_data)
         return Response(users)
