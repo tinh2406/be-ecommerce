@@ -4,12 +4,12 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from core.permission import Permission
+from products.domains import ProductDomain
 from products.serializers import ProductSerializer
 from products.serializers.product_serializer import (
     QueryByListIds,
     QueryProductSerializer,
 )
-from products.services import ESProductService, ProductService
 
 
 class ProductViewSet(ModelViewSet):
@@ -21,82 +21,73 @@ class ProductViewSet(ModelViewSet):
 
         serializer = ProductSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
+        product = ProductDomain.create_product(serializer.validated_data)
+        return Response(ProductSerializer(product).data, status=status.HTTP_201_CREATED)
 
     def retrieve(self, request, *args, **kwargs):
         pk = kwargs.get("pk")
-        instance = ProductService.get(pk)
-        serializer = ProductSerializer(instance)
-        return Response(serializer.data)
+        instance = ProductDomain.get(pk)
+        return Response(ProductSerializer(instance).data)
 
     def update(self, request, *args, **kwargs):
         Permission.check_admin_permission(request)
 
         pk = kwargs.get("pk")
-        instance = ProductService.get(pk, use_cache=False)
+        instance = ProductDomain.get(pk)
         serializer = ProductSerializer(instance, data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
+        product = ProductDomain.update(instance, serializer.validated_data)
+        return Response(ProductSerializer(product).data)
 
     def destroy(self, request, *args, **kwargs):
         Permission.check_admin_permission(request)
 
         pk = kwargs.get("pk")
-        ProductService.delete(pk)
+        ProductDomain.delete(pk)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=["post"])
     def restore(self, request, pk=None):
         Permission.check_admin_permission(request)
 
-        ProductService.restore(pk)
+        ProductDomain.restore(pk)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def list(self, request, *args, **kwargs):
         query = QueryProductSerializer(data=request.query_params)
         query.is_valid(raise_exception=True)
-        response = ESProductService.search(query.data)
-        products = response.pop("data")
-        new_products = []
-        for product in products:
-            is_like = False
-            if request.user.id:
-                is_like = ProductService.check_is_like(product.id, request.user.id)
-            new_products.append({**product, "is_like": is_like})
-        response["data"] = new_products
+
+        response = ProductDomain.search_products(
+            query.validated_data, user_id=request.user.id
+        )
+
         return Response(response)
 
     @action(detail=False, methods=["post"])
     def list_by_ids(self, request, *args, **kwargs):
         query = QueryByListIds(data=request.data)
         query.is_valid(raise_exception=True)
-        products = ESProductService.get_list_by_ids(query.data["product_ids"])
-        new_products = []
-        for product in products:
-            is_like = False
-            if request.user.id:
-                is_like = ProductService.check_is_like(product.id, request.user.id)
-            new_products.append({**product, "is_like": is_like})
 
-        return Response(new_products)
+        products = ProductDomain.get_by_ids(
+            query.validated_data["product_ids"], user_id=request.user.id
+        )
+
+        return Response(products)
 
     @action(detail=False, methods=["get"])
     def wish_list(self, request, *args, **kwargs):
         user = request.user
-        product_ids = ProductService.get_wish_list(user.id)
-        products = ESProductService.get_list_by_ids(product_ids)
+        products = ProductDomain.get_wish_list(user_id=user.id)
         return Response(products)
 
     @action(detail=True, methods=["post"])
     def like(self, request, pk=None):
         user = request.user
-        res = ProductService.like(pk, user_id=user.id)
+        res = ProductDomain.like(pk, user_id=user.id)
         return Response(res)
 
     @action(detail=True, methods=["delete"])
     def unlike(self, request, pk=None):
         user = request.user
-        res = ProductService.unlike(pk, user_id=user.id)
+        res = ProductDomain.unlike(pk, user_id=user.id)
         return Response(res)

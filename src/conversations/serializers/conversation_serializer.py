@@ -11,7 +11,7 @@ from conversations.models import Conversation
 from conversations.serializers.message_serializer import MessageSerializer
 from conversations.services import ConversationService
 from core.utils import BaseQuerySerializer
-from users.utils.simple_user_serializer import SimpleUserSerializer
+from users.serializers.simple_user_serializer import SimpleUserSerializer
 
 
 class ConversationSerializer(ModelSerializer):

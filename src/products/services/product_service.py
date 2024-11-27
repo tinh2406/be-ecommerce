@@ -4,7 +4,6 @@ from rest_framework.exceptions import NotFound
 
 from core.services import BaseService
 from products.models import Product, UserLikeProduct
-from products.serializers.simple_product_serializer import SimpleProductSerializer
 
 from .es_product_service import ESProductService
 from .product_attribute_service import ProductAttributeService
@@ -14,7 +13,6 @@ from .product_image_service import ProductImageService
 class ProductService(BaseService):
 
     manager = Product.objects
-    es_service = ESProductService
 
     @staticmethod
     def create_product(
@@ -46,9 +44,6 @@ class ProductService(BaseService):
         if attributes and variants:
             ProductAttributeService.create_multiple(attributes, variants, product.id)
 
-        serializer = SimpleProductSerializer(product)
-        ESProductService.index.delay(serializer.data)
-
         return product
 
     @classmethod
@@ -73,19 +68,19 @@ class ProductService(BaseService):
 
     @classmethod
     def update(
-        cls, instance: Product, validated: dict, **kwargs
+        cls, instance: Product, validated_product: dict, **kwargs
     ) -> Union[Product, None]:
 
-        instance.name = validated.get("name")
-        instance.price = validated.get("price")
-        instance.thumbnail = validated.get("thumbnail")
-        instance.category_id = validated.get("category_id")
-        instance.description = validated.get("description")
-        instance.hot_price = validated.get("hot_price")
+        instance.name = validated_product.get("name")
+        instance.price = validated_product.get("price")
+        instance.thumbnail = validated_product.get("thumbnail")
+        instance.category_id = validated_product.get("category_id")
+        instance.description = validated_product.get("description")
+        instance.hot_price = validated_product.get("hot_price")
 
-        images = validated.get("images", None)
-        attributes = validated.get("attributes", None)
-        variants = validated.get("variants", None)
+        images = validated_product.get("images", None)
+        attributes = validated_product.get("attributes", None)
+        variants = validated_product.get("variants", None)
 
         if images:
             ProductImageService.delete_multiple(instance.id)
@@ -95,8 +90,7 @@ class ProductService(BaseService):
             ProductAttributeService.create_multiple(attributes, variants, instance.id)
 
         instance.save()
-        serializer = SimpleProductSerializer(instance)
-        ESProductService.index.delay(serializer.data)
+
         return instance
 
     @classmethod

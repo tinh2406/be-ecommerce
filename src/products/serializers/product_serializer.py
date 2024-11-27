@@ -15,7 +15,6 @@ from rest_framework.serializers import (
 from core.utils import BaseQuerySerializer
 from products.constants import ProductOrderChoice
 from products.models import Product
-from products.services import CategoryService, ProductService
 
 from .attribute_serializer import AttributeSerializer
 
@@ -32,7 +31,6 @@ class ProductSerializer(ModelSerializer):
     variants = ListField(child=DictField(), required=False)
 
     def validate(self, attrs):
-        CategoryService.get(attrs.get("category_id"), raise_exception=True)
 
         attributes = attrs.get("attributes")
         variants = attrs.get("variants")
@@ -104,14 +102,6 @@ class ProductSerializer(ModelSerializer):
         ]
 
         return data
-
-    def create(self, validated_data):
-        product = ProductService.create_product(validated_data)
-        return product
-
-    def update(self, instance, validated_data):
-        product = ProductService.update(instance, validated_data)
-        return product
 
     @staticmethod
     def extract_names_values_from_attributes(attributes):

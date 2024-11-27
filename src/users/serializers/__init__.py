@@ -1,5 +1,6 @@
 from .address_serializer import AddressSerializer as AddressSerializer
 from .profile_serializer import ProfileSerializer as ProfileSerializer
+from .simple_user_serializer import SimpleUserSerializer as SimpleUserSerializer
 from .user_serializer import ChangeEmailSerializer as ChangeEmailSerializer
 from .user_serializer import LoginSerializer as LoginSerializer
 from .user_serializer import QueryUserSerializer as QueryUserSerializer
