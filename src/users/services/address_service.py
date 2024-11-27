@@ -121,26 +121,18 @@ class AddressService:
         return address
 
     @classmethod
-    def update(
-        cls, instance: Address, validated: dict, partial=False, **kwargs
-    ) -> Address:
-        if partial:
-            instance.city = validated.get("city", instance.city)
-            instance.district = validated.get("district", instance.district)
-            instance.ward = validated.get("ward", instance.ward)
-            instance.detail = validated.get("detail", instance.detail)
-        else:
-            instance.city = validated.get("city")
-            instance.district = validated.get("district")
-            instance.ward = validated.get("ward")
-            instance.detail = validated.get("detail")
+    def update(cls, address: Address, update_data: dict, **kwargs) -> Address:
+        address.city = update_data.get("city")
+        address.district = update_data.get("district")
+        address.ward = update_data.get("ward")
+        address.detail = update_data.get("detail")
 
-        instance.save()
-        return instance
+        address.save()
+        return address
 
     @classmethod
     def delete(cls, address_id, user_id=None, **kwargs) -> bool:
-        address = cls.get(address_id, user_id)
+        address = Address.objects.get(id=address_id, user_id=user_id)
         if address:
             address.delete()
         return True
