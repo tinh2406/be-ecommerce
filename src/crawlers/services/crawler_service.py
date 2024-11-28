@@ -4,30 +4,27 @@ from typing import Union
 from django_celery_beat.models import PeriodicTask
 from rest_framework.exceptions import NotFound
 
-from crawlers.services.request_params_service import RequestParamsService
 from crawlers.utils import periodic_task_cron_builder
 
 
 class CrawlerService:
 
     @classmethod
-    def create(cls, validated: dict) -> PeriodicTask:
+    def create(cls, validated_crawler: dict) -> PeriodicTask:
 
-        name = validated.get("name")
-        url = validated.get("url")
-        detail_url = validated.get("detail_url")
-        quantity = validated.get("quantity")
-        start_time = validated.get("start_time")
-        end_time = validated.get("end_time")
-        cycle_length = validated.get("cycle_length")
-        every = validated.get("every")
-        products_mapper_id = validated.get("products_mapper_id")
-        product_mapper_id = validated.get("product_mapper_id")
+        name = validated_crawler.get("name")
+        url = validated_crawler.get("url")
+        detail_url = validated_crawler.get("detail_url")
+        quantity = validated_crawler.get("quantity")
+        start_time = validated_crawler.get("start_time")
+        end_time = validated_crawler.get("end_time")
+        cycle_length = validated_crawler.get("cycle_length")
+        every = validated_crawler.get("every")
+        products_mapper_id = validated_crawler.get("products_mapper_id")
+        product_mapper_id = validated_crawler.get("product_mapper_id")
+        request_params_id = validated_crawler.get("request_params_id")
 
         schedule = periodic_task_cron_builder(every, cycle_length, start_time)
-
-        request_params = RequestParamsService.create(validated)
-        request_params_id = str(request_params.id)
 
         task = PeriodicTask.objects.create(
             **schedule,
@@ -63,23 +60,21 @@ class CrawlerService:
             return None
 
     @classmethod
-    def update(cls, instance: PeriodicTask, validated: dict) -> PeriodicTask:
+    def update(cls, instance: PeriodicTask, validated_crawler: dict) -> PeriodicTask:
 
-        name = validated.get("name")
-        url = validated.get("url")
-        detail_url = validated.get("detail_url")
-        quantity = validated.get("quantity")
-        start_time = validated.get("start_time")
-        end_time = validated.get("end_time")
-        cycle_length = validated.get("cycle_length")
-        every = validated.get("every")
-        products_mapper_id = validated.get("products_mapper_id")
-        product_mapper_id = validated.get("product_mapper_id")
+        name = validated_crawler.get("name")
+        url = validated_crawler.get("url")
+        detail_url = validated_crawler.get("detail_url")
+        quantity = validated_crawler.get("quantity")
+        start_time = validated_crawler.get("start_time")
+        end_time = validated_crawler.get("end_time")
+        cycle_length = validated_crawler.get("cycle_length")
+        every = validated_crawler.get("every")
+        products_mapper_id = validated_crawler.get("products_mapper_id")
+        product_mapper_id = validated_crawler.get("product_mapper_id")
+        request_params_id = validated_crawler.get("request_params_id")
 
         schedule = periodic_task_cron_builder(every, cycle_length, start_time)
-
-        request_params = RequestParamsService.create(validated)
-        request_params_id = str(request_params.id)
 
         instance.name = name
         instance.enabled = False

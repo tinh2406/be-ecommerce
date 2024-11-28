@@ -9,7 +9,6 @@ from rest_framework.serializers import (
 from core.utils import BaseQuerySerializer
 from crawlers.constants import MapperOrderChoice
 from crawlers.models import ProductMapper
-from crawlers.services import ProductMapperService
 
 
 class ProductMapperSerializer(ModelSerializer):
@@ -33,14 +32,6 @@ class ProductMapperSerializer(ModelSerializer):
         if attrs.get("attributes") and attrs.get("variants") and missing_fields:
             raise ValidationError("Missing required fields for attributes or variants")
         return attrs
-
-    def create(self, validated_data):
-        mapper = ProductMapperService.create(validated_data)
-        return mapper.id
-
-    def update(self, instance, validated_data):
-        mapper = ProductMapperService.update(instance, validated_data)
-        return mapper.id
 
 
 class SimpleProductMapperSerializer(ModelSerializer):

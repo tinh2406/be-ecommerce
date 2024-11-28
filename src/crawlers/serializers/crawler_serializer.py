@@ -15,7 +15,7 @@ from rest_framework.serializers import (
 
 from core.utils import BaseQuerySerializer
 from crawlers.constants import CrawlerOrderChoice, ScheduleChoice
-from crawlers.services import CrawlerService, RequestParamsService
+from crawlers.services import RequestParamsService
 from crawlers.tasks.crawl_task import test_crawl_config
 
 
@@ -87,13 +87,6 @@ class CrawlerSerializer(Serializer):
             raise ValidationError({"test_crawl_config": str(e)})
 
         return attrs
-
-    def create(self, validated_data):
-        try:
-            crawler = CrawlerService.create(validated_data)
-            return crawler.id
-        except Exception as e:
-            raise ValidationError(e)
 
 
 class PeriodicTaskSerializer(ModelSerializer):
