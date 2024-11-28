@@ -3,8 +3,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from suggestion.domains import RatingDomain
 from suggestion.serializers.rating_serializer import RatingSerializer
+from suggestion.services import RatingService
 
 
 class RatingViewSet(ModelViewSet):
@@ -15,7 +15,7 @@ class RatingViewSet(ModelViewSet):
         serializer = RatingSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        RatingDomain.real_rating(
+        RatingService.real_rating(
             request.user.id,
             pk,
             serializer.data["rating"],
@@ -28,7 +28,7 @@ class RatingViewSet(ModelViewSet):
         serializer = RatingSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        RatingDomain.hidden_rating(
+        RatingService.hidden_rating(
             request.user.id,
             pk,
             serializer.data["rating"],
@@ -39,7 +39,7 @@ class RatingViewSet(ModelViewSet):
     @action(detail=True, methods=["POST"])
     def disinterest_rating(self, request, pk=None):
 
-        RatingDomain.disinterest_rating(
+        RatingService.disinterest_rating(
             request.user.id,
             pk,
         )

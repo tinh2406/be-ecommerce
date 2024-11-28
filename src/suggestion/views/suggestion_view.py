@@ -2,8 +2,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from suggestion.domains import SuggestionDomain
 from suggestion.serializers import GuestSuggestionSerializer
+from suggestion.services import SuggestionsService
 
 
 class SuggestionViewSet(ModelViewSet):
@@ -12,12 +12,12 @@ class SuggestionViewSet(ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         if request.user.id:
-            products = SuggestionDomain.get_suggestion(request.user.id)
+            products = SuggestionsService.get_suggestion(request.user.id)
         else:
             serializer = GuestSuggestionSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
 
-            products = SuggestionDomain.get_suggestion(
+            products = SuggestionsService.get_suggestion(
                 latest_ratings=serializer.data["latest_ratings"]
             )
         return Response(products)
@@ -27,7 +27,7 @@ class SuggestionViewSet(ModelViewSet):
         product_id = kwargs.get("pk")
 
         if request.user.id:
-            products = SuggestionDomain.get_suggestion(
+            products = SuggestionsService.get_suggestion(
                 request.user.id, product_id=product_id
             )
         else:
@@ -35,7 +35,7 @@ class SuggestionViewSet(ModelViewSet):
             if not serializer.is_valid():
                 return Response(serializer.errors)
 
-            products = SuggestionDomain.get_suggestion(
+            products = SuggestionsService.get_suggestion(
                 latest_ratings=serializer.data["latest_ratings"], product_id=product_id
             )
         return Response(products)

@@ -23,7 +23,7 @@ path = f"{BASE_DIR}/suggestion/data"
 device = torch.device("mps" if torch.mps.is_available() else "cpu")
 
 
-class UserRatingService:
+class UserRatingDomain:
     user_ids = get_user_ids(f"{path}/users/1ids.csv")
     sorted_products = []
 

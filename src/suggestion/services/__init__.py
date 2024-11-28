@@ -1,8 +1,5 @@
-from .embedding_service import EmbeddingService as EmbeddingService
-from .product_similarity_service import (
-    ProductSimilarityService as ProductSimilarityService,
-)
+from .rating_service import RatingService as RatingService
 from .suggestion_service import SuggestionsService as SuggestionsService
-from .user_rating_service import UserRatingService as UserRatingService
-
-# UserRatingService.predict_rating_for_user()
+from .user_product_matrix_service import (
+    UserProductMatrixService as UserProductMatrixService,
+)

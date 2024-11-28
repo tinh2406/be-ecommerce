@@ -81,7 +81,7 @@ def embedding_products(
 path = f"{BASE_DIR}/suggestion/data"
 
 
-class EmbeddingService:
+class EmbeddingDomain:
     batch_size = 16
     model_name = "vinai/phobert-base-v2"
 

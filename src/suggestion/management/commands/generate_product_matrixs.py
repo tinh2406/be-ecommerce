@@ -2,8 +2,8 @@ import torch
 from django.core.management import BaseCommand
 from django.db import connection
 
-from suggestion.services.embedding_service import EmbeddingService
-from suggestion.services.product_similarity_service import (
+from src.suggestion.domains.embedding_domain import EmbeddingDomain
+from src.suggestion.domains.product_similarity_domain import (
     save_embeddings,
     save_ids,
     save_similarity_matrix,
@@ -20,7 +20,7 @@ device = torch.device("mps" if torch.mps.is_available() else "cpu")
 
 
 def create_embeddings(products: list[dict]) -> tuple[list[str], torch.Tensor]:
-    ids, embeddings = EmbeddingService.embedding(products)
+    ids, embeddings = EmbeddingDomain.embedding(products)
     embeddings = torch.tensor(embeddings).float().to(device)
     return ids, embeddings
 

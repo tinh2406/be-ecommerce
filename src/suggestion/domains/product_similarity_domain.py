@@ -22,7 +22,7 @@ path = f"{BASE_DIR}/suggestion/data"
 device = torch.device("mps" if torch.mps.is_available() else "cpu")
 
 
-class ProductSimilarityService:
+class ProductSimilarityDomain:
     ids = get_old_ids(f"{path}/products/1ids.csv")
     embeddings = get_old_embeddings(f"{path}/products/2embeddings.csv")
     similarity_matrix = get_old_similarity_matrix(
