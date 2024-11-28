@@ -1,6 +1,6 @@
 from core.services import BaseDeleteService, BaseRetrieveService
-from products.serializers import CategorySerializer
 from products.domains import CategoryDomain, ESCategoryDomain
+from products.serializers import CategorySerializer
 
 
 class CategoryService(BaseDeleteService, BaseRetrieveService):

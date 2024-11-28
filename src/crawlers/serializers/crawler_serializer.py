@@ -15,7 +15,7 @@ from rest_framework.serializers import (
 
 from core.utils import BaseQuerySerializer
 from crawlers.constants import CrawlerOrderChoice, ScheduleChoice
-from crawlers.services import RequestParamsService
+from crawlers.domains import RequestParamsService
 from crawlers.tasks.crawl_task import test_crawl_config
 
 

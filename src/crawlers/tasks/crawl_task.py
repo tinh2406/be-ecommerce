@@ -1,9 +1,9 @@
 import requests  # type: ignore
 from celery import shared_task
 
+from crawlers.domains.mapper_domain import ProductMapperDomain, ProductsMapperDomain
+from crawlers.domains.request_params_domain import RequestParamsDomain
 from crawlers.models import ProductMapper
-from crawlers.services.mapper_service import ProductMapperService, ProductsMapperService
-from crawlers.services.request_params_service import RequestParamsService
 from crawlers.utils import (
     NotFoundKeyException,
     get_value_by_nested_key,
@@ -109,7 +109,7 @@ def extract_variants(data, product_mapper: ProductMapper, attributes):
 
 
 def get_one_item(url, headers, params, product_mapper_id):
-    product_mapper = ProductMapperService.get(product_mapper_id)
+    product_mapper = ProductMapperDomain.get(product_mapper_id)
     response = requests.get(url, headers=headers, params=params)
     data = response.json()
 
@@ -155,7 +155,7 @@ def test_crawl_config(**kwargs):
 
     product_mapper_id = kwargs.get("product_mapper_id")
     products_mapper_id = kwargs.get("products_mapper_id")
-    products_mapper = ProductsMapperService.get(products_mapper_id)
+    products_mapper = ProductsMapperDomain.get(products_mapper_id)
 
     response = requests.get(url, headers=headers, params=params).json()
 
@@ -198,12 +198,12 @@ def crawl_task(**kwargs):
     request_params_id = kwargs.get("request_params_id")
     detail_url = kwargs.get("detail_url")
 
-    request_properties = RequestParamsService.get(request_params_id)
+    request_properties = RequestParamsDomain.get(request_params_id)
     headers = request_properties.headers or {}
     params = request_properties.params or {}
 
     products_mapper_id = kwargs.get("products_mapper_id")
-    products_mapper = ProductsMapperService.get(products_mapper_id)
+    products_mapper = ProductsMapperDomain.get(products_mapper_id)
 
     take_key = params.get("take_key")
     page_key = params.get("page_key")
@@ -244,6 +244,6 @@ def crawl_task(**kwargs):
                 continue
         params[page_key] += 1
         params["total_saved"] = total_saved
-        RequestParamsService.update_params(request_params_id, params)
+        RequestParamsDomain.update_params(request_params_id, params)
 
     return True

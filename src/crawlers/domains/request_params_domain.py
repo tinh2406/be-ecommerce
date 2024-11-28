@@ -1,8 +1,8 @@
-from core.domains import BaseService
+from core.domains import BaseDomain
 from crawlers.models import RequestParams
 
 
-class RequestParamsService(BaseService):
+class RequestParamsDomain(BaseDomain):
 
     manager = RequestParams.objects
 

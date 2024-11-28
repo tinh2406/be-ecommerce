@@ -1,10 +1,10 @@
 from django.db.models import Manager
 
-from core.domains import BaseService
+from core.domains import BaseDomain
 from crawlers.models import ProductMapper, ProductsMapper
 
 
-class SearchMapperService:
+class SearchMapperDomain:
     manager: Manager
 
     @classmethod
@@ -60,9 +60,9 @@ class SearchMapperService:
         return query_set
 
 
-class ProductMapperService(BaseService, SearchMapperService):
+class ProductMapperDomain(BaseDomain, SearchMapperDomain):
     manager = ProductMapper.objects
 
 
-class ProductsMapperService(BaseService, SearchMapperService):
+class ProductsMapperDomain(BaseDomain, SearchMapperDomain):
     manager = ProductsMapper.objects
