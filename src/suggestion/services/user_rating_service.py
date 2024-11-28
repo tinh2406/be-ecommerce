@@ -14,13 +14,9 @@ from suggestion.utils import (
     save_20latest_rating_matrix,
     save_disinterest,
     save_hidden_user_rating_matrix,
-    save_predicted_user_rating_matrix,
     save_real_user_rating_matrix,
     save_user_ids,
 )
-
-from .predict_user_rating_service import Rating
-from .product_similarity_service import ProductSimilarityService
 
 path = f"{BASE_DIR}/suggestion/data"
 
@@ -29,7 +25,7 @@ device = torch.device("mps" if torch.mps.is_available() else "cpu")
 
 class UserRatingService:
     user_ids = get_user_ids(f"{path}/users/1ids.csv")
-    sorted_products = ProductSimilarityService.sorted_products
+    sorted_products = []
 
     real_user_rating_matrix = get_real_user_rating_matrix(
         f"{path}/users/2real_rating.csv"
@@ -284,14 +280,3 @@ class UserRatingService:
         ).tolist()[:20]
 
         return highest_ratings
-
-    @classmethod
-    def predict_rating_for_user(cls):
-        n_users = len(cls.user_ids)
-        tr = cls.hidden_user_rating_matrix.T
-        tm = tr != 0
-        model = Rating(n_users, 2, 10, 500, 0.01, 0.01)
-        model.train_and_validate(100, tr, tr, tm, tm)
-        predict = model.predict(tr).cpu()
-        save_predicted_user_rating_matrix(predict.T)
-        cls.predicted_user_rating_matrix = predict.T

@@ -225,3 +225,39 @@ def get_old_sorted_products(file_path: str) -> torch.Tensor:
     products = pd.read_csv(file_path, header=None)
     products = torch.tensor(products.to_numpy().flatten()).int().to(device)
     return products
+
+
+path = f"{BASE_DIR}/suggestion/data"
+
+device = torch.device("mps" if torch.mps.is_available() else "cpu")
+
+
+def save_ids(ids: list[str]):
+    ids_df = pd.DataFrame(ids)
+    ids_df.to_csv(f"{path}/products/1ids.csv", index=False, header=False)
+
+
+def save_embeddings(embeddings: torch.Tensor):
+    embeddings = pd.DataFrame(embeddings.cpu().numpy())
+    embeddings.to_csv(f"{path}/products/2embeddings.csv", index=False, header=False)
+
+
+def save_similarity_matrix(similarity_matrix: torch.Tensor):
+    similarity_matrix = pd.DataFrame(similarity_matrix.cpu().numpy())
+    similarity_matrix.to_csv(
+        f"{path}/products/3similarity_matrix.csv", index=False, header=False
+    )
+
+
+def save_sorted_products(sorted_products: torch.Tensor):
+    sorted_products = pd.DataFrame(sorted_products.cpu().numpy())
+    sorted_products.to_csv(
+        f"{path}/products/4sorted_products.csv", index=False, header=False
+    )
+
+
+def save_sorted_matrix(sorted_matrix: torch.Tensor):
+    sorted_matrix = pd.DataFrame(sorted_matrix.cpu().numpy())
+    sorted_matrix.to_csv(
+        f"{path}/products/5sorted_matrix.csv", index=False, header=False
+    )
