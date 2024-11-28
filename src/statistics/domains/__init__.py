@@ -1,0 +1,2 @@
+from .product_statistic_domain import ProductStatisticDomain as ProductStatisticDomain
+from .user_statistic_domain import UserStatisticDomain as UserStatisticDomain
