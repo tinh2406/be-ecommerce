@@ -1,94 +1,94 @@
-from typing import Union
+from core.services import BaseDeleteService, BaseRetrieveService
+from products.domains import (
+    CategoryDomain,
+    ESProductDomain,
+    ProductAttributeDomain,
+    ProductDomain,
+    ProductImageDomain,
+)
+from products.models import Product
+from products.serializers import ProductSerializer
 
-from rest_framework.exceptions import NotFound
 
-from core.domains import BaseService
-from products.models import Product, UserLikeProduct
+class ProductService(BaseDeleteService, BaseRetrieveService):
 
+    main_domain = ProductDomain
 
-class ProductService(BaseService):
+    @classmethod
+    def create_product(cls, validated_product: dict) -> Product:
 
-    manager = Product.objects
+        CategoryDomain.get(validated_product["category_id"], raise_exception=True)
 
-    @staticmethod
-    def create_product(
-        validated_product: dict,
-    ):
-        name = validated_product.get("name")
-        price = validated_product.get("price")
-        thumbnail = validated_product.get("thumbnail")
-        category_id = validated_product.get("category_id")
-        description = validated_product.get("description")
-        hot_price = validated_product.get("hot_price")
+        product = ProductDomain.create_product(validated_product)
+        ProductImageDomain.bulk_create(validated_product, product.id)
+        ProductAttributeDomain.bulk_create(validated_product, product.id)
 
-        source_id = validated_product.get("product_id", None)
-
-        product = Product.objects.create(
-            name=name,
-            description=description,
-            thumbnail=thumbnail,
-            price=price,
-            category_id=category_id,
-            hot_price=hot_price,
-            source_id=source_id,
-        )
-
+        ESProductDomain.index.delay(ProductSerializer(product).data)
         return product
 
     @classmethod
-    def get(cls, pk, raise_exception=True, **kwargs) -> Union[Product, None]:
-        try:
-            product = Product.objects.get(
-                id=pk,
-                related_fields=[
-                    "images",
-                    "category",
-                    "attributes__values",
-                    "variants__attributes__product_attribute_value__attribute",
-                ],
-            )
-            if product:
-                return product
-        except Exception:
-            pass
-        if raise_exception:
-            raise NotFound("Product not found")
-        return None
+    def update(cls, product: Product, validated_product: dict) -> Product:
+
+        CategoryDomain.get(validated_product["category_id"], raise_exception=True)
+
+        ProductImageDomain.delete_multiple(product.id)
+        ProductImageDomain.bulk_create(validated_product, product.id)
+        ProductAttributeDomain.delete_multiple(product.id)
+        ProductAttributeDomain.bulk_create(validated_product, product.id)
+
+        product = ProductDomain.update(product, validated_product)
+
+        ESProductDomain.index.delay(ProductSerializer(product).data)
+        return product
 
     @classmethod
-    def update(
-        cls, instance: Product, validated_product: dict, **kwargs
-    ) -> Union[Product, None]:
-
-        instance.name = validated_product.get("name")
-        instance.price = validated_product.get("price")
-        instance.thumbnail = validated_product.get("thumbnail")
-        instance.category_id = validated_product.get("category_id")
-        instance.description = validated_product.get("description")
-        instance.hot_price = validated_product.get("hot_price")
-
-        instance.save()
-
-        return instance
+    def on_delete_success(cls, pk: str):
+        ESProductDomain.soft_delete.delay(pk)
 
     @classmethod
-    def like(cls, pk, user_id):
-        cls.get(pk)
-        UserLikeProduct.objects.create(user_id=user_id, product_id=pk)
+    def on_restore_success(cls, pk: str):
+        ESProductDomain.restore.delay(pk)
+
+    @classmethod
+    def search_products(cls, query: dict, user_id: str):
+
+        response = ESProductDomain.search(query)
+
+        products = response.pop("data")
+        new_products = []
+        for product in products:
+            is_like = False
+            if user_id:
+                is_like = ProductDomain.check_is_like(product.id, user_id)
+            new_products.append({**product, "is_like": is_like})
+        response["data"] = new_products
+        return response
+
+    @classmethod
+    def get_by_ids(cls, product_ids: list, user_id: str):
+
+        products = ESProductDomain.get_list_by_ids(product_ids)
+        new_products = []
+        for product in products:
+            is_like = False
+            if user_id:
+                is_like = ProductDomain.check_is_like(product.id, user_id)
+            new_products.append({**product, "is_like": is_like})
+
+        return new_products
+
+    @classmethod
+    def get_wish_list(cls, user_id: str):
+        product_ids = ProductDomain.get_wish_list(user_id)
+        products = ESProductDomain.get_list_by_ids(product_ids)
+        return products
+
+    @classmethod
+    def like(cls, pk: str, user_id: str):
+        ProductDomain.like(pk, user_id)
         return True
 
     @classmethod
-    def unlike(cls, pk, user_id):
-        UserLikeProduct.objects.filter(user_id=user_id, product_id=pk).delete()
+    def unlike(cls, pk: str, user_id: str):
+        ProductDomain.unlike(pk, user_id)
         return True
-
-    @classmethod
-    def check_is_like(cls, pk, user_id):
-        return UserLikeProduct.objects.filter(user_id=user_id, product_id=pk).exists()
-
-    @classmethod
-    def get_wish_list(cls, user_id):
-        product_ids = UserLikeProduct.objects.filter(user_id=user_id).values_list(
-            "product_id", flat=True
-        )
-        return list(product_ids)

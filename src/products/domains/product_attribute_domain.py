@@ -8,7 +8,7 @@ from products.models import (
 )
 
 
-class ProductAttributeService:
+class ProductAttributeDomain:
 
     @classmethod
     def create_multiple_attribute(

@@ -1,7 +1,7 @@
 from celery import shared_task
 
+from products.domains import CategoryService, ProductService
 from products.models import Category, Product
-from products.services import CategoryService, ProductService
 
 
 @shared_task

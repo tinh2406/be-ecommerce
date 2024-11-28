@@ -4,8 +4,8 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from core.permission import Permission
-from products.domains import CategoryDomain
 from products.serializers import CategorySerializer, QueryCategorySerializer
+from products.services import CategoryService
 
 
 class CategoryViewSet(ModelViewSet):
@@ -17,7 +17,7 @@ class CategoryViewSet(ModelViewSet):
 
         serializer = CategorySerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        category = CategoryDomain.create(serializer.validated_data)
+        category = CategoryService.create(serializer.validated_data)
 
         return Response(
             CategorySerializer(category).data, status=status.HTTP_201_CREATED
@@ -26,7 +26,7 @@ class CategoryViewSet(ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         pk = kwargs.get("pk")
 
-        category = CategoryDomain.get(pk)
+        category = CategoryService.get(pk)
         category_serializer = CategorySerializer(category)
         return Response(category_serializer.data)
 
@@ -34,30 +34,30 @@ class CategoryViewSet(ModelViewSet):
         Permission.check_admin_permission(request)
 
         pk = kwargs.get("pk")
-        category = CategoryDomain.get(pk)
+        category = CategoryService.get(pk)
         serializer = CategorySerializer(category, data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        CategoryDomain.update(category, serializer.validated_data)
+        CategoryService.update(category, serializer.validated_data)
         return Response(CategorySerializer(category).data)
 
     def destroy(self, request, *args, **kwargs):
         Permission.check_admin_permission(request)
 
         pk = kwargs.get("pk")
-        CategoryDomain.delete(pk)
+        CategoryService.delete(pk)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=["post"])
     def restore(self, request, pk=None):
         Permission.check_admin_permission(request)
 
-        CategoryDomain.restore(pk)
+        CategoryService.restore(pk)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def list(self, request, *args, **kwargs):
         query = QueryCategorySerializer(data=request.query_params)
         query.is_valid(raise_exception=True)
 
-        categories = CategoryDomain.search_categories(query.data)
+        categories = CategoryService.search_categories(query.data)
         return Response(categories)

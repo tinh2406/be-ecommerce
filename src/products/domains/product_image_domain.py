@@ -3,7 +3,7 @@ from typing import List
 from products.models import ProductImage
 
 
-class ProductImageService:
+class ProductImageDomain:
 
     @classmethod
     def create(cls, url, product_id, **kwargs) -> ProductImage:

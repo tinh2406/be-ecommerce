@@ -1,33 +1,32 @@
-from core.services import BaseDeleteDomain, BaseRetrieveDomain
-from products.serializers import CategorySerializer
-from products.services import CategoryService, ESCategoryService
+from typing import Union
+
+from core.domains import BaseDomain
+from products.models import Category
 
 
-class CategoryDomain(BaseRetrieveDomain, BaseDeleteDomain):
+class CategoryDomain(BaseDomain):
+
+    manager = Category.objects
 
     @classmethod
-    def create(cls, validated_category):
-        category = CategoryService.create(validated_category)
+    def create(cls, validated_category: dict, **kwargs) -> Category:
+        name = validated_category.get("name")
+        parent_id = validated_category.get("parent_id")
+        source_id = validated_category.get("source_id")
 
-        ESCategoryService.index.delay(CategorySerializer(category).data)
+        category = Category.objects.create(
+            name=name, source_id=source_id, parent_id=parent_id
+        )
+
         return category
 
     @classmethod
-    def update(cls, instance, validated_category):
-        category = CategoryService.update(instance, validated_category)
+    def update(
+        cls, instance: Category, validated: dict, **kwargs
+    ) -> Union[Category, None]:
 
-        ESCategoryService.index.delay(CategorySerializer(category).data)
-        return category
+        instance.name = validated.get("name")
+        instance.parent_id = validated.get("parent_id")
 
-    @classmethod
-    def on_delete_success(cls, pk):
-        ESCategoryService.soft_delete.delay(pk)
-
-    @classmethod
-    def on_restore_success(cls, pk):
-        ESCategoryService.restore.delay(pk)
-
-    @classmethod
-    def search_categories(cls, query):
-        categories = ESCategoryService.search(query)
-        return categories
+        instance.save()
+        return instance
