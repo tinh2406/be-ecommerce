@@ -1,7 +1,7 @@
 from rest_framework.serializers import CharField, ModelSerializer
 
+from conversations.domains import MessageService
 from conversations.models import Message
-from conversations.services import MessageService
 from core.utils import BaseQuerySerializer
 
 

@@ -4,11 +4,11 @@ from elasticsearch_dsl import Range
 from elasticsearch_dsl.query import Exists
 
 from conversations.document import ConversationDocument
-from core.domains import BaseESService
-from users.domains import ESUserService
+from core.domains import BaseESDomain
+from users.domains import ESUserDomain
 
 
-class ESConversationService(BaseESService):
+class ESConversationDomain(BaseESDomain):
 
     @staticmethod
     @shared_task
@@ -72,7 +72,7 @@ class ESConversationService(BaseESService):
         if keyword:
             sender_ids = [
                 hit.meta.id
-                for hit in ESUserService.search({"keyword": keyword}, paginate=False)
+                for hit in ESUserDomain.search({"keyword": keyword}, paginate=False)
             ]
 
             search = search.query(

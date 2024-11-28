@@ -1,7 +1,7 @@
 from conversations.models import UnRead
 
 
-class UnReadService:
+class UnReadDomain:
 
     @classmethod
     def add_unread(cls, conversation_id, user_id, amount=1):
