@@ -1,11 +1,10 @@
 from math import ceil
 
 from django.db import connection
+from django_eventstream import send_event
 from rest_framework.exceptions import NotFound
 
 from conversations.models import Conversation
-from conversations.services.es_conversation_service import ESConversationService
-from conversations.utils import SimpleConversationSerializer
 from core.services import BaseService
 from users.models import User
 
@@ -13,15 +12,6 @@ from users.models import User
 class ConversationService(BaseService):
 
     manager = Conversation.objects
-    es_service = ESConversationService
-
-    @classmethod
-    def create(cls, validated: dict):
-        obj = super().create(validated)
-
-        serializer = SimpleConversationSerializer(obj)
-        ESConversationService.index.delay(serializer.data)
-        return obj
 
     @classmethod
     def get(cls, pk, raise_exception=True, **kwargs) -> Conversation | None:
@@ -45,9 +35,6 @@ class ConversationService(BaseService):
         )
         instance.save()
 
-        serializer = SimpleConversationSerializer(instance)
-        ESConversationService.index.delay(serializer.data)
-
         return instance
 
     @classmethod
@@ -59,11 +46,7 @@ class ConversationService(BaseService):
         conversation.last_message_id = (
             validated.get("last_message_id") or conversation.last_message_id
         )
-        print(conversation.name)
         conversation.save()
-        serializer = SimpleConversationSerializer(conversation)
-        ESConversationService.index.delay(serializer.data)
-
         return conversation
 
     @classmethod
@@ -134,3 +117,11 @@ class ConversationService(BaseService):
             "page_size": page_size,
             "page": page,
         }
+
+    @classmethod
+    def conversation_name_change_notify(cls, sender_id, conversation_id):
+        send_event(
+            f"user-{sender_id}",
+            "message",
+            {"id": conversation_id, "type": "CONVERSATION_NAME_CHANGE"},
+        )

@@ -9,7 +9,6 @@ from rest_framework.serializers import (
 from conversations.constants import ConversationOrderChoices
 from conversations.models import Conversation
 from conversations.serializers.message_serializer import MessageSerializer
-from conversations.services import ConversationService
 from core.utils import BaseQuerySerializer
 from users.serializers.simple_user_serializer import SimpleUserSerializer
 
@@ -23,10 +22,6 @@ class ConversationSerializer(ModelSerializer):
         model = Conversation
         fields = "__all__"
         read_only_fields = ["id", "created_at", "updated_at", "last_message", "sender"]
-
-    def update(self, instance, validated_data):
-        ConversationService.update(instance, validated_data)
-        return instance
 
 
 class QueryConversationSerializer(BaseQuerySerializer):
@@ -50,3 +45,18 @@ class QueryUserSerializer(BaseQuerySerializer):
     order_by = ChoiceField(
         allow_null=True, required=False, choices=["conversation_count", "name"]
     )
+
+
+class SimpleConversationSerializer(ModelSerializer):
+
+    class Meta:
+        model = Conversation
+        fields = "__all__"
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        ret["sender_id"] = instance.sender.id
+        if instance.last_message:
+            ret["last_message_id"] = instance.last_message.id
+            ret["last_message_content"] = instance.last_message.content
+        return ret
