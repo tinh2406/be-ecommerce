@@ -83,7 +83,13 @@ class ProductAttributeService:
         return product_variants
 
     @classmethod
-    def create_multiple(cls, attributes, variants, product_id, **kwargs):
+    def bulk_create(cls, validated_product, product_id, **kwargs):
+
+        attributes = validated_product.get("attributes", None)
+        variants = validated_product.get("variants", None)
+
+        if not attributes or not variants:
+            return [], []
 
         product_attributes, created_attributes = cls.create_multiple_attribute(
             attributes, product_id

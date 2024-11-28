@@ -1,7 +1,13 @@
 from core.domains import BaseDeleteDomain, BaseRetrieveDomain
 from products.models import Product
 from products.serializers import ProductSerializer
-from products.services import CategoryService, ESProductService, ProductService
+from products.services import (
+    CategoryService,
+    ESProductService,
+    ProductAttributeService,
+    ProductImageService,
+    ProductService,
+)
 
 
 class ProductDomain(BaseRetrieveDomain, BaseDeleteDomain):
@@ -12,6 +18,8 @@ class ProductDomain(BaseRetrieveDomain, BaseDeleteDomain):
         CategoryService.get(validated_product["category_id"], raise_exception=True)
 
         product = ProductService.create_product(validated_product)
+        ProductImageService.bulk_create(validated_product, product.id)
+        ProductAttributeService.bulk_create(validated_product, product.id)
 
         ESProductService.index.delay(ProductSerializer(product).data)
         return product
@@ -20,6 +28,11 @@ class ProductDomain(BaseRetrieveDomain, BaseDeleteDomain):
     def update(cls, product: Product, validated_product: dict) -> Product:
 
         CategoryService.get(validated_product["category_id"], raise_exception=True)
+
+        ProductImageService.delete_multiple(product.id)
+        ProductImageService.bulk_create(validated_product, product.id)
+        ProductAttributeService.delete_multiple(product.id)
+        ProductAttributeService.bulk_create(validated_product, product.id)
 
         product = ProductService.update(product, validated_product)
 

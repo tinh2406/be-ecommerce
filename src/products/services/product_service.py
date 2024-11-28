@@ -5,10 +5,6 @@ from rest_framework.exceptions import NotFound
 from core.services import BaseService
 from products.models import Product, UserLikeProduct
 
-from .es_product_service import ESProductService
-from .product_attribute_service import ProductAttributeService
-from .product_image_service import ProductImageService
-
 
 class ProductService(BaseService):
 
@@ -16,19 +12,16 @@ class ProductService(BaseService):
 
     @staticmethod
     def create_product(
-        validated: dict,
+        validated_product: dict,
     ):
-        name = validated.get("name")
-        price = validated.get("price")
-        thumbnail = validated.get("thumbnail")
-        category_id = validated.get("category_id")
-        description = validated.get("description")
-        hot_price = validated.get("hot_price")
+        name = validated_product.get("name")
+        price = validated_product.get("price")
+        thumbnail = validated_product.get("thumbnail")
+        category_id = validated_product.get("category_id")
+        description = validated_product.get("description")
+        hot_price = validated_product.get("hot_price")
 
-        images = validated.get("images", None)
-        attributes = validated.get("attributes", None)
-        variants = validated.get("variants", None)
-        source_id = validated.get("product_id", None)
+        source_id = validated_product.get("product_id", None)
 
         product = Product.objects.create(
             name=name,
@@ -39,10 +32,6 @@ class ProductService(BaseService):
             hot_price=hot_price,
             source_id=source_id,
         )
-        if images:
-            ProductImageService.create_multiple(images, product.id)
-        if attributes and variants:
-            ProductAttributeService.create_multiple(attributes, variants, product.id)
 
         return product
 
@@ -78,17 +67,6 @@ class ProductService(BaseService):
         instance.description = validated_product.get("description")
         instance.hot_price = validated_product.get("hot_price")
 
-        images = validated_product.get("images", None)
-        attributes = validated_product.get("attributes", None)
-        variants = validated_product.get("variants", None)
-
-        if images:
-            ProductImageService.delete_multiple(instance.id)
-            ProductImageService.create_multiple(images, instance.id)
-        if attributes and variants:
-            ProductAttributeService.delete_multiple(instance.id)
-            ProductAttributeService.create_multiple(attributes, variants, instance.id)
-
         instance.save()
 
         return instance
@@ -113,4 +91,4 @@ class ProductService(BaseService):
         product_ids = UserLikeProduct.objects.filter(user_id=user_id).values_list(
             "product_id", flat=True
         )
-        return ESProductService.get_list_by_ids(list(product_ids))
+        return list(product_ids)
