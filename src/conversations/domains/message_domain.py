@@ -4,7 +4,7 @@ from time import sleep
 from chatbot.services.chatbot import ChatbotService
 from conversations.constants import MessageRoles
 from conversations.services import ConversationService, MessageService, UnReadService
-from core.domains import BaseRetrieveDomain
+from core.services import BaseRetrieveDomain
 
 
 class MessageDomain(

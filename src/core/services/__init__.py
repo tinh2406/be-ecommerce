@@ -1,2 +1,2 @@
-from .base_es_service import BaseESService as BaseESService
-from .base_service import BaseService as BaseService
+from .base_delete_service import BaseDeleteService as BaseDeleteService
+from .base_retrieve_service import BaseRetrieveService as BaseRetrieveService

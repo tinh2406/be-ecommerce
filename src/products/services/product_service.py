@@ -2,7 +2,7 @@ from typing import Union
 
 from rest_framework.exceptions import NotFound
 
-from core.services import BaseService
+from core.domains import BaseService
 from products.models import Product, UserLikeProduct
 
 

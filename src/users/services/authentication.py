@@ -1,7 +1,7 @@
 from rest_framework import exceptions
 from rest_framework.authentication import BaseAuthentication, get_authorization_header
 
-from users.services.jwt_service import JWTService
+from users.domains.jwt_domain import JWTDomain
 
 
 class JWTAuthentication(BaseAuthentication):
@@ -22,7 +22,7 @@ class JWTAuthentication(BaseAuthentication):
             raise exceptions.AuthenticationFailed(msg)
 
         try:
-            user = JWTService.decode(token, 12)
+            user = JWTDomain.decode(token, 12)
             if not user.is_active:
                 raise exceptions.AuthenticationFailed("User inactive or deleted.")
         except Exception:

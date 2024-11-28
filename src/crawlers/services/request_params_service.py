@@ -1,4 +1,4 @@
-from core.services import BaseService
+from core.domains import BaseService
 from crawlers.models import RequestParams
 
 

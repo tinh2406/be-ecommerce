@@ -1,7 +1,7 @@
 from users.models import Profile, User
 
 
-class ProfileService:
+class ProfileDomain:
 
     @classmethod
     def create(cls, user: User) -> Profile:

@@ -4,7 +4,7 @@ from conversations.services import (
     ESConversationService,
     UnReadService,
 )
-from core.domains import BaseDeleteDomain, BaseRetrieveDomain
+from core.services import BaseDeleteDomain, BaseRetrieveDomain
 
 
 class ConversationDomain(BaseRetrieveDomain, BaseDeleteDomain):

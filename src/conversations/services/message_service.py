@@ -6,7 +6,7 @@ from rest_framework.exceptions import NotFound
 
 from conversations.constants import MessageRoles
 from conversations.models import Message
-from core.services import BaseService
+from core.domains import BaseService
 
 # Khởi tạo MongoClient và kết nối đến MongoDB
 client = MongoClient(

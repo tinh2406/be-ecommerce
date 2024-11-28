@@ -1,2 +1,2 @@
-from .base_delete_domain import BaseDeleteDomain as BaseDeleteDomain
-from .base_retrieve_domain import BaseRetrieveDomain as BaseRetrieveDomain
+from .base_domain import BaseDomain as BaseDomain
+from .base_es_domain import BaseESDomain as BaseESDomain

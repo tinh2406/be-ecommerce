@@ -3,13 +3,13 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
-from users.domains import AuthDomain
 from users.serializers import (
     LoginSerializer,
     RegisterSerializer,
     UpdatePasswordWithTokenSerializer,
 )
 from users.serializers.user_serializer import RequestTokenSerializer
+from users.services import AuthService
 
 
 class AuthViewSet(ViewSet):
@@ -22,7 +22,7 @@ class AuthViewSet(ViewSet):
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        AuthDomain.register(serializer.validated_data)
+        AuthService.register(serializer.validated_data)
         return Response({"message": "Register successfully"})
 
     @action(methods=["POST"], detail=False)
@@ -30,7 +30,7 @@ class AuthViewSet(ViewSet):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        login_data = AuthDomain.login(**serializer.validated_data)
+        login_data = AuthService.login(**serializer.validated_data)
         return Response(login_data)
 
     @action(methods=["POST"], detail=False)
@@ -38,7 +38,7 @@ class AuthViewSet(ViewSet):
         serializer = RequestTokenSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        AuthDomain.request_token(**serializer.validated_data)
+        AuthService.request_token(**serializer.validated_data)
         return Response({"message": "Request verify token successfully"})
 
     @action(methods=["POST"], detail=False)
@@ -46,6 +46,6 @@ class AuthViewSet(ViewSet):
         serializer = UpdatePasswordWithTokenSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        if AuthDomain.reset_password_by_token(**serializer.validated_data):
+        if AuthService.reset_password_by_token(**serializer.validated_data):
             return Response({"message": "Change password successfully"})
         return Response({"message": "Change password failed"}, status=400)

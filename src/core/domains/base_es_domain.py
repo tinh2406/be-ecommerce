@@ -1,4 +1,4 @@
-class BaseESService:
+class BaseESDomain:
 
     @staticmethod
     def index(item: dict):

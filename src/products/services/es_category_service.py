@@ -2,7 +2,7 @@ from celery import shared_task
 from django.utils import timezone
 from elasticsearch_dsl.query import Exists, Range, Term
 
-from core.services import BaseESService
+from core.domains import BaseESService
 from products.document import CategoryDocument
 
 

@@ -5,7 +5,7 @@ from django_eventstream import send_event
 from rest_framework.exceptions import NotFound
 
 from conversations.models import Conversation
-from core.services import BaseService
+from core.domains import BaseService
 from users.models import User
 
 

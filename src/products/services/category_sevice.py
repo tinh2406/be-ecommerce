@@ -1,6 +1,6 @@
 from typing import Union
 
-from core.services import BaseService
+from core.domains import BaseService
 from products.models import Category
 
 

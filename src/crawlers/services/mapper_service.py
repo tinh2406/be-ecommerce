@@ -1,6 +1,6 @@
 from django.db.models import Manager
 
-from core.services import BaseService
+from core.domains import BaseService
 from crawlers.models import ProductMapper, ProductsMapper
 
 

@@ -5,7 +5,7 @@ from rest_framework.exceptions import NotFound
 from src.core.managers import BaseTimeManager
 
 
-class BaseService:
+class BaseDomain:
 
     manager: Type[BaseTimeManager]
 

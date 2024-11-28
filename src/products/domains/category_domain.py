@@ -1,4 +1,4 @@
-from core.domains import BaseDeleteDomain, BaseRetrieveDomain
+from core.services import BaseDeleteDomain, BaseRetrieveDomain
 from products.serializers import CategorySerializer
 from products.services import CategoryService, ESCategoryService
 

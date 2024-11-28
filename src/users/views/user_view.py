@@ -4,7 +4,6 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from users.constants import Roles
-from users.domains import UserDomain
 from users.serializers import (
     ChangeEmailSerializer,
     QueryUserSerializer,
@@ -12,6 +11,7 @@ from users.serializers import (
     UpdateRoleSerializer,
     UserSerializer,
 )
+from users.services import UserService
 
 
 class UserViewSet(ModelViewSet):
@@ -28,7 +28,7 @@ class UserViewSet(ModelViewSet):
                 status=403,
             )
 
-        user = UserDomain.get(pk)
+        user = UserService.get(pk)
         return Response(UserSerializer(user).data)
 
     @action(methods=["GET"], detail=False)
@@ -42,7 +42,7 @@ class UserViewSet(ModelViewSet):
         serializer = UserSerializer(user, data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        UserDomain.update(user, serializer.validated_data)
+        UserService.update(user, serializer.validated_data)
         return Response({"message": "Update successfully"})
 
     @action(methods=["POST"], detail=False)
@@ -50,7 +50,7 @@ class UserViewSet(ModelViewSet):
 
         serializer = ChangeEmailSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        if UserDomain.update_email(**serializer.validated_data):
+        if UserService.update_email(**serializer.validated_data):
             return Response({"message": "Change email successfully"})
         return Response({"message": "Change email failed"}, status=400)
 
@@ -61,7 +61,7 @@ class UserViewSet(ModelViewSet):
         serializer = UpdatePasswordSerializer(user, data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        if UserDomain.update_password(user, **serializer.validated_data):
+        if UserService.update_password(user, **serializer.validated_data):
             return Response({"message": "Change password successfully"})
         return Response({"message": "Change password failed"}, status=400)
 
@@ -72,7 +72,7 @@ class UserViewSet(ModelViewSet):
         if user.is_superuser or user.role in (Roles.ADMIN, Roles.STAFF):
             pk = kwargs.get("pk")
 
-        if UserDomain.delete(pk):
+        if UserService.delete(pk):
             return Response({"message": "Delete successfully"})
 
         return Response({"message": "Delete failed"}, status=400)
@@ -86,7 +86,7 @@ class UserViewSet(ModelViewSet):
             )
 
         pk = kwargs.get("pk")
-        if UserDomain.restore(pk):
+        if UserService.restore(pk):
             return Response({"message": "Restore successfully"})
         return Response({"message": "Restore failed"}, status=400)
 
@@ -99,7 +99,7 @@ class UserViewSet(ModelViewSet):
             )
 
         pk = kwargs.get("pk")
-        if UserDomain.ban(pk):
+        if UserService.ban(pk):
             return Response({"message": "Ban user successfully"})
         return Response({"message": "Ban failed"}, status=400)
 
@@ -112,7 +112,7 @@ class UserViewSet(ModelViewSet):
             )
 
         pk = kwargs.get("pk")
-        if UserDomain.unban(pk):
+        if UserService.unban(pk):
             return Response({"message": "Unban user successfully"})
         return Response({"message": "Unban failed"}, status=400)
 
@@ -124,7 +124,7 @@ class UserViewSet(ModelViewSet):
         serializer = UpdateRoleSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        if UserDomain.update_role(user, pk, role=serializer.data.get("role")):
+        if UserService.update_role(user, pk, role=serializer.data.get("role")):
             return Response({"message": "Update role successfully"})
         return Response({"message": "Update role failed"}, status=400)
 
@@ -136,5 +136,5 @@ class UserViewSet(ModelViewSet):
         query = QueryUserSerializer(data=request.query_params)
         query.is_valid(raise_exception=True)
 
-        users = UserDomain.search_user(query.validated_data)
+        users = UserService.search_user(query.validated_data)
         return Response(users)

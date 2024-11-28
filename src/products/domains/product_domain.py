@@ -1,4 +1,4 @@
-from core.domains import BaseDeleteDomain, BaseRetrieveDomain
+from core.services import BaseDeleteDomain, BaseRetrieveDomain
 from products.models import Product
 from products.serializers import ProductSerializer
 from products.services import (

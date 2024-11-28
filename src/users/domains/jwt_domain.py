@@ -5,7 +5,7 @@ from django.conf import settings
 from rest_framework.exceptions import ValidationError
 
 
-class JWTService:
+class JWTDomain:
 
     @staticmethod
     def get_header():
@@ -19,12 +19,12 @@ class JWTService:
     def encode(user):
         payload = {"email": user.email, "iat": datetime.now().timestamp()}
 
-        token = jwt.encode(payload, JWTService.get_secret_key(), algorithm="HS256")
+        token = jwt.encode(payload, JWTDomain.get_secret_key(), algorithm="HS256")
         return token
 
     @staticmethod
     def decode(token, token_hours=12):
-        payload = jwt.decode(token, JWTService.get_secret_key(), algorithms=["HS256"])
+        payload = jwt.decode(token, JWTDomain.get_secret_key(), algorithms=["HS256"])
 
         iat = int(payload.get("iat"))
         email = payload.get("email")
@@ -32,9 +32,9 @@ class JWTService:
         if iat + token_hours * 60 * 60 < datetime.now().timestamp():
             return None
 
-        from .user_service import UserService
+        from .user_domain import UserDomain
 
-        user = UserService.get_by_email(email)
+        user = UserDomain.get_by_email(email)
         if user:
             return user
         return None
@@ -42,14 +42,14 @@ class JWTService:
     @staticmethod
     def create_verify_token(email):
         payload = {"email": email, "iat": datetime.now().timestamp()}
-        token = jwt.encode(payload, JWTService.get_secret_key(), algorithm="HS256")
+        token = jwt.encode(payload, JWTDomain.get_secret_key(), algorithm="HS256")
         return token
 
     @staticmethod
     def confirm_verify_token(token):
         try:
             payload = jwt.decode(
-                token, JWTService.get_secret_key(), algorithms=["HS256"]
+                token, JWTDomain.get_secret_key(), algorithms=["HS256"]
             )
             if payload.get("iat") + 5 * 60 < datetime.now().timestamp():
                 raise ValidationError("Token expired")

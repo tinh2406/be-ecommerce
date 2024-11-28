@@ -4,8 +4,8 @@ from elasticsearch_dsl import Range
 from elasticsearch_dsl.query import Exists
 
 from conversations.document import ConversationDocument
-from core.services import BaseESService
-from users.services import ESUserService
+from core.domains import BaseESService
+from users.domains import ESUserService
 
 
 class ESConversationService(BaseESService):
