@@ -1,4 +1,4 @@
-from .product_statistics_service import (
-    ProductStatisticsService as ProductStatisticsService,
+from .product_statistic_service import (
+    ProductStatisticService as ProductStatisticService,
 )
-from .user_statistics_service import UserStatisticsService as UserStatisticsService
+from .user_statistic_service import UserStatisticService as UserStatisticService

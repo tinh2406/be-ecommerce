@@ -1,4 +1,4 @@
-from core.services import BaseRetrieveService, BaseDeleteService
+from core.services import BaseDeleteService, BaseRetrieveService
 from crawlers.domains import ProductsMapperDomain
 
 

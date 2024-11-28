@@ -1,2 +1,4 @@
-from .product_statistic_domain import ProductStatisticDomain as ProductStatisticDomain
-from .user_statistic_domain import UserStatisticDomain as UserStatisticDomain
+from .product_statistics_domain import (
+    ProductStatisticsDomain as ProductStatisticsDomain,
+)
+from .user_statistics_domain import UserStatisticsDomain as UserStatisticsDomain

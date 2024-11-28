@@ -2,13 +2,13 @@ from statistics.utils import get_date_ranges
 
 from django.db.models import Case, Count, JSONField, Value, When
 
-from users.models import User
+from products.models import Product
 
 
-class UserStatisticsService:
+class ProductStatisticsDomain:
 
     @classmethod
-    def get_user_statistics(cls, query: dict):
+    def get_product_statistics(cls, query: dict):
 
         cycle = query.get("cycle")
         num_cycle = query.get("num_cycle")
@@ -20,21 +20,19 @@ class UserStatisticsService:
         conditions = [
             When(
                 created_at__range=(dates_ranges[i + 1], dates_ranges[i]),
-                then=Value(
-                    f"{dates_ranges[i+1].strftime('%Y-%m-%d')} - {dates_ranges[i].strftime('%Y-%m-%d')}"
-                ),
+                then=Value(f"{dates_ranges[i+1].strftime('%Y-%m-%d')}"),
             )
             for i in range(len(dates_ranges) - 1)
         ]
 
         query_set = (
-            User.objects.annotate(
+            Product.objects.annotate(
                 range_label=Case(
-                    *conditions, default=Value("Other"), output_field=JSONField()
+                    *conditions, default=Value("0"), output_field=JSONField()
                 )
             )
             .values("range_label")
-            .annotate(count=Count("id"))
+            .annotate(count=Count("range_label"))
             .order_by("range_label")
         )
 

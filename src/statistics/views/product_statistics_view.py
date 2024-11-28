@@ -1,5 +1,5 @@
-from statistics.domains import ProductStatisticDomain
 from statistics.serializers import QueryStatisticsSerializer
+from statistics.services import ProductStatisticService
 
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
@@ -15,7 +15,7 @@ class ProductStatisticsView(ViewSet):
         query = request.query_params
         query_serializer = QueryStatisticsSerializer(data=query)
         query_serializer.is_valid(raise_exception=True)
-        data = ProductStatisticDomain.get_product_statistics(
+        data = ProductStatisticService.get_product_statistics(
             query_serializer.validated_data
         )
         return Response(data)
