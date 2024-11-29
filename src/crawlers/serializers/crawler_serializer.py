@@ -15,7 +15,7 @@ from rest_framework.serializers import (
 
 from core.utils import BaseQuerySerializer
 from crawlers.constants import CrawlerOrderChoice, ScheduleChoice
-from crawlers.domains import RequestParamsService
+from crawlers.domains import RequestParamsDomain
 from crawlers.tasks.crawl_task import test_crawl_config
 
 
@@ -120,7 +120,7 @@ class DetailPeriodicTaskSerializer(ModelSerializer):
 
     def to_representation(self, instance):
         kwargs = json.loads(instance.kwargs)
-        request_params = RequestParamsService.get(kwargs["request_params_id"])
+        request_params = RequestParamsDomain.get(kwargs["request_params_id"])
 
         data = {
             "id": instance.id,

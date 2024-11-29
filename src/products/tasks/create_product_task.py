@@ -1,6 +1,6 @@
 from celery import shared_task
 
-from products.domains import CategoryService, ProductService
+from products.domains import CategoryDomain, ProductDomain
 from products.models import Category, Product
 
 
@@ -18,7 +18,7 @@ def create_product_task(validated: dict, **kwargs) -> bool:
     except Category.DoesNotExist:
         category = None
     if not category:
-        category = CategoryService.create(
+        category = CategoryDomain.create(
             {
                 "name": validated.get("category_name"),
                 "source_id": validated.get("category_id"),
@@ -26,5 +26,5 @@ def create_product_task(validated: dict, **kwargs) -> bool:
         )
 
     validated["category_id"] = category.id
-    ProductService.create_product(validated)
+    ProductDomain.create_product(validated)
     return True
