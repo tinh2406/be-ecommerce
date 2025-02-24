@@ -5,3 +5,6 @@ __pycache__
 /.idea
 /chatbot/data
 /suggestion/data
+/src/chatbot/data
+/src/suggestion/data
+

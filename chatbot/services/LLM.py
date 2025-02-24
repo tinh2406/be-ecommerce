@@ -62,9 +62,10 @@ class LLM:
             {
                 "role": "system",
                 "content": """Bạn đang cần hiểu xem câu hỏi hoặc yêu cầu của người dùng, tuy nhiên người dùng
-                                    lại thường xuyên đưa ra những câu hỏi ngắn gọn không đầy đủ ý nghĩa.
-                                    Bạn hãy cố gắng dựa vào nội dung đoạn chat để hiểu rõ hơn về câu hỏi của người dùng.
-                                    Và sinh ra câu hỏi mà người dùng thực sự đang muốn hỏi về gì dưới dạng json.
+                                    lại thường xuyên đưa ra những câu hỏi hoặc yêu cầu ngắn gọn không đầy đủ ý nghĩa.
+                                    Bạn hãy cố gắng dựa vào nội dung đoạn chat để hiểu rõ hơn về câu nói của người dùng.
+                                    Và viết lại câu nói của người dùng một cách đầy đủ hơn mà người dùng thực sự đang muốn 
+                                    nói về dưới dạng json.
                                     Lưu ý: không được phép trả lời trả lời câu hỏi người dùng mà chỉ cần trả về câu hỏi.
                                     Ví dụ:
                                     {
@@ -91,6 +92,14 @@ class LLM:
                                     Trả lời
                                     {
                                         "question": "Cho tôi xem ô tô mà bạn có?"
+                                    }
+                                    {
+                                        "content": "Tôi muốn tìm tai nghe?"
+                                        "role": "user"
+                                    }
+                                    Trả lời
+                                    {
+                                        "question": "Cho tôi xem tai nghe mà bạn có?"
                                     }
                                     """.replace(
                     "  ", ""
